@@ -365,6 +365,7 @@ export type Database = {
       notifications: {
         Row: {
           actor_id: string | null
+          archived_at: string | null
           created_at: string
           data: Json
           id: string
@@ -374,6 +375,7 @@ export type Database = {
         }
         Insert: {
           actor_id?: string | null
+          archived_at?: string | null
           created_at?: string
           data?: Json
           id?: string
@@ -383,6 +385,7 @@ export type Database = {
         }
         Update: {
           actor_id?: string | null
+          archived_at?: string | null
           created_at?: string
           data?: Json
           id?: string
@@ -617,6 +620,10 @@ export type Database = {
       }
       stories: {
         Row: {
+          audio_artist: string | null
+          audio_artwork_url: string | null
+          audio_preview_url: string | null
+          audio_title: string | null
           background_color: string | null
           caption: string | null
           created_at: string
@@ -628,6 +635,10 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          audio_artist?: string | null
+          audio_artwork_url?: string | null
+          audio_preview_url?: string | null
+          audio_title?: string | null
           background_color?: string | null
           caption?: string | null
           created_at?: string
@@ -639,6 +650,10 @@ export type Database = {
           user_id: string
         }
         Update: {
+          audio_artist?: string | null
+          audio_artwork_url?: string | null
+          audio_preview_url?: string | null
+          audio_title?: string | null
           background_color?: string | null
           caption?: string | null
           created_at?: string

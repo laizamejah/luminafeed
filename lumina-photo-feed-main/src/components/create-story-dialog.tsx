@@ -54,6 +54,7 @@ export function CreateStoryDialog({ onClose, onCreated }: { onClose: () => void;
       toast.success("Story shared — visible for 24 hours");
       onCreated();
     } catch (e) {
+      console.error("Story upload failed", e);
       toast.error(e instanceof Error ? e.message : "Upload failed");
     } finally {
       setUploading(false);

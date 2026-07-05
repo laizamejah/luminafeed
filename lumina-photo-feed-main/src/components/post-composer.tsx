@@ -155,6 +155,7 @@ export function PostComposer() {
       setText(''); setFiles([]); setTrack(null); setFeeling('');
       await qc.invalidateQueries({ queryKey: ['feed'], exact: false });
     } catch (e) {
+      console.error("Post publish failed", e);
       toast.error(e instanceof Error ? e.message : 'Publish failed');
     } finally {
       setPublishing(false);

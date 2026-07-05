@@ -42,36 +42,41 @@ export function StoriesBar() {
   const { data: stories = [], refetch } = useQuery({
     queryKey: ["stories"],
     queryFn: async () => {
-      const { data: storyRows, error: storyError } = await supabase
-        .from("stories")
-        .select("id, user_id, storage_path, media_type, caption, background_color, text_content, created_at, expires_at, audio_preview_url, audio_title, audio_artist, audio_artwork_url")
-        .gt("expires_at", new Date().toISOString())
-        .order("created_at", { ascending: false })
-        .limit(200);
+      try {
+        const { data: storyRows, error: storyError } = await supabase
+          .from("stories")
+          .select("id, user_id, storage_path, media_type, caption, background_color, text_content, created_at, expires_at, audio_preview_url, audio_title, audio_artist, audio_artwork_url")
+          .gt("expires_at", new Date().toISOString())
+          .order("created_at", { ascending: false })
+          .limit(200);
 
-      if (storyError) throw storyError;
+        if (storyError) throw storyError;
 
-      const storiesData = (storyRows ?? []) as Array<Omit<StoryRow, "author">>;
-      const userIds = [...new Set(storiesData.map((story) => story.user_id))];
-      const authorMap = new Map<string, StoryAuthor>();
+        const storiesData = (storyRows ?? []) as Array<Omit<StoryRow, "author">>;
+        const userIds = [...new Set(storiesData.map((story) => story.user_id))];
+        const authorMap = new Map<string, StoryAuthor>();
 
-      if (userIds.length > 0) {
-        const { data: profiles, error: profilesError } = await supabase
-          .from("profiles")
-          .select("id, username, display_name, avatar_url")
-          .in("id", userIds);
+        if (userIds.length > 0) {
+          const { data: profiles, error: profilesError } = await supabase
+            .from("profiles")
+            .select("id, username, display_name, avatar_url")
+            .in("id", userIds);
 
-        if (profilesError) throw profilesError;
+          if (profilesError) throw profilesError;
 
-        for (const profile of (profiles ?? []) as StoryAuthor[]) {
-          authorMap.set(profile.id, profile);
+          for (const profile of (profiles ?? []) as StoryAuthor[]) {
+            authorMap.set(profile.id, profile);
+          }
         }
-      }
 
-      return storiesData.map((story) => ({
-        ...story,
-        author: authorMap.get(story.user_id) ?? null,
-      })) as StoryRow[];
+        return storiesData.map((story) => ({
+          ...story,
+          author: authorMap.get(story.user_id) ?? null,
+        })) as StoryRow[];
+      } catch (err) {
+        console.error("Failed to load stories", err);
+        return [] as StoryRow[];
+      }
     },
     refetchInterval: 60_000,
   });

@@ -1,0 +1,168 @@
+@import "tailwindcss" source(none);
+@source "../src";
+@import "tw-animate-css";
+@import "leaflet/dist/leaflet.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --font-serif: "Fraunces", ui-serif, Georgia, serif;
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-ochre: var(--ochre);
+}
+
+:root {
+  --radius: 0.375rem;
+  /* Warm gallery paper */
+  --background: oklch(0.985 0.008 85);
+  --foreground: oklch(0.18 0.01 60);
+  --card: oklch(0.995 0.004 85);
+  --card-foreground: oklch(0.18 0.01 60);
+  --popover: oklch(0.995 0.004 85);
+  --popover-foreground: oklch(0.18 0.01 60);
+  --primary: oklch(0.18 0.01 60);
+  --primary-foreground: oklch(0.985 0.008 85);
+  --secondary: oklch(0.94 0.012 80);
+  --secondary-foreground: oklch(0.18 0.01 60);
+  --muted: oklch(0.94 0.012 80);
+  --muted-foreground: oklch(0.48 0.012 70);
+  --accent: oklch(0.92 0.02 75);
+  --accent-foreground: oklch(0.18 0.01 60);
+  --destructive: oklch(0.55 0.18 27);
+  --destructive-foreground: oklch(0.985 0.008 85);
+  --border: oklch(0.88 0.012 75);
+  --input: oklch(0.88 0.012 75);
+  --ring: oklch(0.55 0.09 60);
+  --ochre: oklch(0.68 0.12 62);
+  --story-blue: oklch(0.58 0.2 255);
+  --story-blue-foreground: oklch(0.985 0.008 85);
+}
+
+.dark {
+  --background: oklch(0.14 0.006 60);
+  --foreground: oklch(0.96 0.008 85);
+  --card: oklch(0.18 0.006 60);
+  --card-foreground: oklch(0.96 0.008 85);
+  --popover: oklch(0.18 0.006 60);
+  --popover-foreground: oklch(0.96 0.008 85);
+  --primary: oklch(0.96 0.008 85);
+  --primary-foreground: oklch(0.14 0.006 60);
+  --secondary: oklch(0.24 0.006 60);
+  --secondary-foreground: oklch(0.96 0.008 85);
+  --muted: oklch(0.24 0.006 60);
+  --muted-foreground: oklch(0.68 0.01 70);
+  --accent: oklch(0.28 0.012 65);
+  --accent-foreground: oklch(0.96 0.008 85);
+  --destructive: oklch(0.65 0.19 27);
+  --destructive-foreground: oklch(0.96 0.008 85);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.68 0.12 62);
+  --ochre: oklch(0.72 0.13 62);
+  --story-blue: oklch(0.66 0.19 255);
+  --story-blue-foreground: oklch(0.98 0.004 85);
+}
+
+@layer base {
+  * { border-color: var(--color-border); }
+  html, body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+  h1, h2, h3, .font-serif { font-family: var(--font-serif); font-optical-sizing: auto; letter-spacing: -0.02em; }
+}
+
+/* iPhone-style liquid glass utility */
+.liquid-glass {
+  /* configurable variables */
+  --liquid-blur: 18px;
+  --liquid-saturate: 120%;
+  --liquid-opacity: 0.12;
+  --liquid-border: rgba(255,255,255,0.12);
+  --liquid-shadow: 0 8px 30px rgba(10,10,10,0.08);
+  position: relative;
+  background-color: rgba(255,255,255,var(--liquid-opacity));
+  -webkit-backdrop-filter: blur(var(--liquid-blur)) saturate(var(--liquid-saturate));
+  backdrop-filter: blur(var(--liquid-blur)) saturate(var(--liquid-saturate));
+  border: 1px solid var(--liquid-border);
+  box-shadow: var(--liquid-shadow), inset 0 1px 0 rgba(255,255,255,0.06);
+  background-image: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
+  transition: background-color 240ms ease, border-color 240ms ease, box-shadow 240ms ease, backdrop-filter 240ms ease, -webkit-backdrop-filter 240ms ease;
+}
+
+.liquid-glass::before {
+  /* subtle repeating noise overlay (SVG data URI) */
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='64' height='64' viewBox='0 0 64 64'><filter id='n'><feTurbulence baseFrequency='0.9' numOctaves='1' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='64' height='64' filter='url(%23n)' opacity='0.06' fill='white'/></svg>");
+  background-repeat: repeat;
+  opacity: 0.8;
+  pointer-events: none;
+  mix-blend-mode: overlay;
+}
+
+.liquid-glass::after {
+  /* soft rim highlight at top and subtle vignette */
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 40%;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02) 30%, transparent 60%);
+  mask-image: linear-gradient(black, transparent);
+}
+
+.dark .liquid-glass {
+  --liquid-opacity: 0.18;
+  --liquid-border: rgba(255,255,255,0.04);
+  --liquid-shadow: 0 8px 30px rgba(0,0,0,0.6);
+  background-color: rgba(10,10,10,var(--liquid-opacity));
+  background-image: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+}
+
+/* Slight elevated ring for the prominent create button */
+.glass-prominent {
+  box-shadow: 0 6px 18px rgba(0,0,0,0.12), 0 2px 6px rgba(0,0,0,0.06);
+  transform: translateZ(0);
+}
+
+/* subtle focus ring for accessibility */
+.liquid-glass:focus-within { box-shadow: 0 10px 36px rgba(0,0,0,0.12); }
+
+.scrollbar-none {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.scrollbar-none::-webkit-scrollbar { display: none; }
+
+/* leaflet dark tweaks */
+.leaflet-container { background: var(--color-muted); font-family: var(--font-sans); }

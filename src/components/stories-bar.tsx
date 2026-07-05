@@ -52,7 +52,7 @@ export function StoriesBar() {
 
         if (storyError) throw storyError;
 
-        const storiesData = (storyRows ?? []) as Array<Omit<StoryRow, "author">>;
+        const storiesData = (storyRows ?? []) as unknown as Array<Omit<StoryRow, "author">>;
         const userIds = [...new Set(storiesData.map((story) => story.user_id))];
         const authorMap = new Map<string, StoryAuthor>();
 

@@ -153,7 +153,7 @@ export function PostComposer() {
     <Dialog>
       <DialogTrigger asChild>
         <div className="flex items-center gap-3 rounded-full border border-border bg-card px-4 py-3 shadow-sm transition hover:bg-secondary/60 cursor-pointer">
-          <AvatarImage path={user?.avatar_url} name={user?.display_name ?? user?.username} size={40} />
+          <AvatarImage path={profile?.avatar_url} name={profile?.display_name ?? profile?.username} size={40} />
           <span className="text-sm text-muted-foreground">What's on your mind?</span>
         </div>
       </DialogTrigger>

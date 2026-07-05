@@ -2,7 +2,7 @@
 import { useState, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useCurrentUser } from "@/hooks/use-current-user";
+import { useCurrentUser, useCurrentProfile } from "@/hooks/use-current-user";
 import { AvatarImage } from "./avatar-image";
 import { Button } from "./ui/button";
 import { Textarea } from "./ui/textarea";
@@ -14,6 +14,7 @@ import type { SpotifyTrack } from "@/lib/spotify.functions";
 
 export function PostComposer() {
   const { data: user } = useCurrentUser();
+  const { data: profile } = useCurrentProfile();
   const qc = useQueryClient();
   const [text, setText] = useState("");
   const textRef = useRef<HTMLTextAreaElement | null>(null);

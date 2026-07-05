@@ -52,7 +52,7 @@ export function StoriesBar() {
 
         if (storyError) throw storyError;
 
-        const storiesData = (storyRows ?? []) as Array<Omit<StoryRow, "author">>;
+        const storiesData = (storyRows ?? []) as unknown as Array<Omit<StoryRow, "author">>;
         const userIds = [...new Set(storiesData.map((story) => story.user_id))];
         const authorMap = new Map<string, StoryAuthor>();
 
@@ -97,6 +97,18 @@ export function StoriesBar() {
   useEffect(() => {
     setViewedIds(new Set(viewedRows.map((row) => row.story_id)));
   }, [viewedRows]);
+
+  useEffect(() => {
+    const channel = supabase
+      .channel("stories-feed")
+      .on("postgres_changes", { event: "*", schema: "public", table: "stories" }, () => {
+        queryClient.invalidateQueries({ queryKey: ["stories"] });
+      })
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
 
   const markViewed = (storyId: string) => {
     setViewedIds((current) => {

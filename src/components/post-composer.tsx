@@ -2,7 +2,7 @@
 import { useState, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useCurrentUser } from "@/hooks/use-current-user";
+import { useCurrentUser, useCurrentProfile } from "@/hooks/use-current-user";
 import { AvatarImage } from "./avatar-image";
 import { Button } from "./ui/button";
 import { Textarea } from "./ui/textarea";
@@ -14,6 +14,7 @@ import type { SpotifyTrack } from "@/lib/spotify.functions";
 
 export function PostComposer() {
   const { data: user } = useCurrentUser();
+  const { data: profile } = useCurrentProfile();
   const qc = useQueryClient();
   const [text, setText] = useState("");
   const textRef = useRef<HTMLTextAreaElement | null>(null);
@@ -50,8 +51,7 @@ export function PostComposer() {
         const path = `${user.id}/audio/${crypto.randomUUID()}-${audioFile.name}`;
         const { error: upErr } = await supabase.storage.from('media').upload(path, audioFile, { contentType: audioFile.type });
         if (upErr) throw upErr;
-        const { data: publicData, error: publicErr } = supabase.storage.from('media').getPublicUrl(path);
-        if (publicErr) throw publicErr;
+        const { data: publicData } = supabase.storage.from('media').getPublicUrl(path);
         const publicUrl = publicData?.publicUrl;
         if (!publicUrl) throw new Error('Could not generate audio preview URL');
         audioUrl = publicUrl;
@@ -74,29 +74,23 @@ export function PostComposer() {
         const { error: upErr } = await supabase.storage.from('media').upload(path, storyFile, { contentType: storyFile.type });
         if (upErr) throw upErr;
 
-        const storyPayload: Record<string, unknown> = {
+        const storyPayload = {
           user_id: user.id,
           storage_path: path,
           media_type: storyFile.type.startsWith('video/') ? 'video' : 'image',
           caption: captionText || null,
+          ...(audioUrl
+            ? {
+                audio_preview_url: audioUrl,
+                audio_title: audioTitle,
+                audio_artist: audioArtist,
+                audio_artwork_url: audioArtwork,
+              }
+            : {}),
         };
-        if (audioUrl) {
-          storyPayload.audio_preview_url = audioUrl;
-          storyPayload.audio_title = audioTitle;
-          storyPayload.audio_artist = audioArtist;
-          storyPayload.audio_artwork_url = audioArtwork;
-        }
 
-        let storyResult = await supabase.from('stories').insert(storyPayload);
-        if (storyResult.error && audioUrl) {
-          storyResult = await supabase.from('stories').insert({
-            user_id: user.id,
-            storage_path: path,
-            media_type: storyFile.type.startsWith('video/') ? 'video' : 'image',
-            caption: captionText || null,
-          });
-        }
-        if (storyResult.error) throw storyResult.error;
+        const { error: storyErr } = await supabase.from('stories').insert(storyPayload);
+        if (storyErr) throw storyErr;
 
         toast.success('Story shared — visible for 24 hours');
         setText(''); setFiles([]); setTrack(null); setFeeling('');
@@ -105,30 +99,23 @@ export function PostComposer() {
       }
 
       const mediaFiles = currentFiles;
-      const postPayload: Record<string, unknown> = {
+      const postPayload = {
         user_id: user.id,
         caption: captionText || null,
         comments_enabled: true,
         is_reel: mediaFiles.some((f) => f.type.startsWith('video/')),
         kid_safe: false,
+        ...(audioUrl
+          ? {
+              audio_preview_url: audioUrl,
+              audio_title: audioTitle,
+              audio_artist: audioArtist,
+              audio_artwork_url: audioArtwork,
+            }
+          : {}),
       };
-      if (audioUrl) {
-        postPayload.audio_preview_url = audioUrl;
-        postPayload.audio_title = audioTitle;
-        postPayload.audio_artist = audioArtist;
-        postPayload.audio_artwork_url = audioArtwork;
-      }
 
-      let insertPost = await supabase.from('posts').insert(postPayload).select().single();
-      if (insertPost.error && audioUrl) {
-        insertPost = await supabase.from('posts').insert({
-          user_id: user.id,
-          caption: captionText || null,
-          comments_enabled: true,
-          is_reel: mediaFiles.some((f) => f.type.startsWith('video/')),
-          kid_safe: false,
-        }).select().single();
-      }
+      const insertPost = await supabase.from('posts').insert(postPayload).select().single();
       if (insertPost.error || !insertPost.data) throw insertPost.error ?? new Error('Create post failed');
       const post = insertPost.data;
 
@@ -166,7 +153,7 @@ export function PostComposer() {
     <Dialog>
       <DialogTrigger asChild>
         <div className="flex items-center gap-3 rounded-full border border-border bg-card px-4 py-3 shadow-sm transition hover:bg-secondary/60 cursor-pointer">
-          <AvatarImage path={user?.avatar_url} name={user?.display_name ?? user?.username} size={40} />
+          <AvatarImage path={profile?.avatar_url} name={profile?.display_name ?? profile?.username} size={40} />
           <span className="text-sm text-muted-foreground">What's on your mind?</span>
         </div>
       </DialogTrigger>

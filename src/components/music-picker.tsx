@@ -3,7 +3,8 @@ import { useServerFn } from "@tanstack/react-start";
 import { searchSpotify, type SpotifyTrack } from "@/lib/spotify.functions";
 import { Input } from "./ui/input";
 import { Button } from "./ui/button";
-import { Music, X, Play, Pause, ExternalLink, MoreVertical, ChevronRight } from "lucide-react";
+import { Music, X, Play, Pause, ExternalLink, MoreVertical, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 interface Props {
   value: SpotifyTrack | null;
@@ -25,11 +26,19 @@ export function MusicPicker({ value, onChange }: Props) {
   const [q, setQ] = useState("");
   const [results, setResults] = useState<SpotifyTrack[]>([]);
   const [previewId, setPreviewId] = useState<string | null>(null);
+  const [loadingPreviewId, setLoadingPreviewId] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const search = useServerFn(searchSpotify);
   const [showSuggestions, setShowSuggestions] = useState(true);
+
+  useEffect(() => {
+    return () => {
+      audioRef.current?.pause();
+      audioRef.current = null;
+    };
+  }, []);
 
   useEffect(() => {
     if (q.trim().length < 2) {
@@ -166,30 +175,50 @@ export function MusicPicker({ value, onChange }: Props) {
                       if (previewId === t.id) {
                         audioRef.current?.pause();
                         setPreviewId(null);
-                      } else {
-                        if (audioRef.current) {
-                          audioRef.current.pause();
-                          audioRef.current.src = "";
-                        }
-                        const audio = new Audio(t.preview_url ?? "");
-                        audioRef.current = audio;
-                        audio.play().catch(() => {});
-                        setPreviewId(t.id);
-                        audio.addEventListener("ended", () => setPreviewId(null));
+                        return;
                       }
+                      if (audioRef.current) {
+                        audioRef.current.pause();
+                        audioRef.current = null;
+                      }
+                      setLoadingPreviewId(t.id);
+                      const audio = new Audio(t.preview_url ?? "");
+                      audio.crossOrigin = "anonymous";
+                      audioRef.current = audio;
+                      audio.addEventListener("canplay", () => {
+                        setLoadingPreviewId(null);
+                        setPreviewId(t.id);
+                      }, { once: true });
+                      audio.addEventListener("ended", () => setPreviewId(null));
+                      audio.addEventListener("error", () => {
+                        setLoadingPreviewId(null);
+                        setPreviewId(null);
+                        audioRef.current = null;
+                        toast.error("Preview failed to load");
+                      });
+                      audio.play().catch(() => {
+                        setLoadingPreviewId(null);
+                        setPreviewId(null);
+                        toast.error("Tap play again to start preview");
+                      });
                     }}
                     className="h-9 w-9 rounded-full bg-white/90 flex items-center justify-center shadow"
                     aria-label={previewId === t.id ? "Pause preview" : "Play preview"}
                   >
-                    {previewId === t.id ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+                    {loadingPreviewId === t.id ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : previewId === t.id ? (
+                      <Pause className="h-4 w-4" />
+                    ) : (
+                      <Play className="h-4 w-4" />
+                    )}
                   </button>
                 ) : (
                   <button
                     type="button"
-                    onClick={(e) => e.stopPropagation()}
+                    onClick={(e) => { e.stopPropagation(); window.open(`https://open.spotify.com/track/${t.id}`, '_blank'); }}
                     className="h-9 w-9 rounded-full bg-white/90 flex items-center justify-center text-muted-foreground shadow"
                     aria-label="Open in Spotify"
-                    onClickCapture={(e) => { e.stopPropagation(); window.open(`https://open.spotify.com/track/${t.id}`, '_blank'); }}
                   >
                     <ExternalLink className="h-4 w-4" />
                   </button>

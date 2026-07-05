@@ -27,29 +27,23 @@ export function CreateStoryDialog({ onClose, onCreated }: { onClose: () => void;
       const path = `${user.id}/stories/${crypto.randomUUID()}.${ext}`;
       const { error: upErr } = await supabase.storage.from("media").upload(path, file, { contentType: file.type });
       if (upErr) throw upErr;
-      const storyPayload: Record<string, unknown> = {
+      const storyPayload = {
         user_id: user.id,
         storage_path: path,
         media_type: isVideo ? "video" : "image",
         caption: caption || null,
+        ...(track
+          ? {
+              audio_preview_url: track.preview_url,
+              audio_title: track.title,
+              audio_artist: track.artist,
+              audio_artwork_url: track.artwork_url,
+            }
+          : {}),
       };
-      if (track) {
-        storyPayload.audio_preview_url = track.preview_url;
-        storyPayload.audio_title = track.title;
-        storyPayload.audio_artist = track.artist;
-        storyPayload.audio_artwork_url = track.artwork_url;
-      }
 
-      let result = await supabase.from("stories").insert(storyPayload);
-      if (result.error && track) {
-        result = await supabase.from("stories").insert({
-          user_id: user.id,
-          storage_path: path,
-          media_type: isVideo ? "video" : "image",
-          caption: caption || null,
-        });
-      }
-      if (result.error) throw result.error;
+      const { error: insertErr } = await supabase.from("stories").insert(storyPayload);
+      if (insertErr) throw insertErr;
       await queryClient.invalidateQueries({ queryKey: ["stories"] });
       toast.success("Story shared — visible for 24 hours");
       onCreated();

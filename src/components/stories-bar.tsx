@@ -98,6 +98,18 @@ export function StoriesBar() {
     setViewedIds(new Set(viewedRows.map((row) => row.story_id)));
   }, [viewedRows]);
 
+  useEffect(() => {
+    const channel = supabase
+      .channel("stories-feed")
+      .on("postgres_changes", { event: "*", schema: "public", table: "stories" }, () => {
+        queryClient.invalidateQueries({ queryKey: ["stories"] });
+      })
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
+
   const markViewed = (storyId: string) => {
     setViewedIds((current) => {
       const next = new Set(current);

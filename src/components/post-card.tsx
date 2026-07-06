@@ -357,7 +357,7 @@ function MediaDetailOverlay({
       </button>
 
       {/* Media pane */}
-      <div className="relative flex flex-1 items-center justify-center overflow-hidden" onClick={(e) => e.stopPropagation()}>
+      <div className="relative flex min-h-0 flex-1 items-center justify-center overflow-hidden" onClick={(e) => e.stopPropagation()}>
         {media.length > 1 && (
           <button
             onClick={() => setIdx((p) => (p > 0 ? p - 1 : media.length - 1))}
@@ -390,7 +390,7 @@ function MediaDetailOverlay({
       {/* Info + comments pane */}
       <aside
         onClick={(e) => e.stopPropagation()}
-        className="flex max-h-[45vh] w-full flex-col border-t border-border bg-background md:max-h-none md:h-full md:w-[380px] md:border-l md:border-t-0"
+        className="flex h-[55vh] w-full shrink-0 flex-col border-t border-border bg-background md:h-full md:w-[380px] md:border-l md:border-t-0"
       >
         <div className="flex items-center gap-3 border-b border-border px-4 py-3">
           <Link to="/u/$username" params={{ username: post.author.username }}>
@@ -427,7 +427,7 @@ function MediaDetailOverlay({
 
         {post.comments_enabled ? (
           <>
-            <div className="flex-1 space-y-4 overflow-y-auto px-4 py-3">
+            <div className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-4 py-3">
               {comments?.length === 0 && (
                 <p className="text-sm text-muted-foreground">Be the first to comment.</p>
               )}
@@ -435,9 +435,18 @@ function MediaDetailOverlay({
                 const author = c.author as unknown as { username: string; display_name: string | null; avatar_url: string | null };
                 return (
                   <div key={c.id} className="flex gap-2.5">
-                    <AvatarImage path={author.avatar_url} name={author.display_name ?? author.username} size={28} />
+                    <Link to="/u/$username" params={{ username: author.username }} onClick={onClose}>
+                      <AvatarImage path={author.avatar_url} name={author.display_name ?? author.username} size={28} />
+                    </Link>
                     <div className="min-w-0 flex-1 text-sm">
-                      <span className="mr-2 font-medium">{author.username}</span>
+                      <Link
+                        to="/u/$username"
+                        params={{ username: author.username }}
+                        onClick={onClose}
+                        className="mr-2 font-medium hover:underline"
+                      >
+                        {author.username}
+                      </Link>
                       <span className="break-words">{c.content}</span>
                       <div className="mt-0.5 text-[11px] text-muted-foreground">
                         {formatDistanceToNow(new Date(c.created_at), { addSuffix: true })}

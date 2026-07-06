@@ -64,11 +64,15 @@ export function StoryViewer({ groups, startIndex, onClose, onViewed }: { groups:
   }, [item?.id]);
 
   useEffect(() => {
-    if (!item?.audio_preview_url || !audioRef.current) return;
-    audioRef.current.pause();
-    audioRef.current.currentTime = 0;
+    const audio = audioRef.current;
+    if (!audio) return;
+    audio.pause();
+    audio.currentTime = 0;
     setPlaying(false);
-  }, [item?.audio_preview_url]);
+    if (!item?.audio_preview_url) return;
+    // user tapped to open viewer, so autoplay is allowed
+    audio.play().then(() => setPlaying(true)).catch(() => setPlaying(false));
+  }, [item?.audio_preview_url, item?.id]);
 
   function next() {
     if (!group) return;
@@ -108,7 +112,18 @@ export function StoryViewer({ groups, startIndex, onClose, onViewed }: { groups:
         <div className="absolute inset-0 flex items-center justify-center">
           {url && item.media_type === "image" && <img src={url} alt="" className="max-h-full max-w-full object-contain" />}
           {url && item.media_type === "video" && (
-            <video src={url} autoPlay playsInline preload="metadata" controls={false} onEnded={next} className="max-h-full max-w-full object-contain" />
+            <video
+              key={item.id}
+              src={url}
+              autoPlay
+              muted
+              playsInline
+              preload="auto"
+              controls={false}
+              onEnded={next}
+              onCanPlay={(e) => { e.currentTarget.play().catch(() => {}); }}
+              className="max-h-full max-w-full object-contain"
+            />
           )}
         </div>
 

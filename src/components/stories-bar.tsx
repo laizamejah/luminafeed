@@ -6,6 +6,7 @@ import { AvatarImage } from "./avatar-image";
 import { Plus } from "lucide-react";
 import { StoryViewer, type StoryGroup } from "./story-viewer";
 import { CreateStoryDialog } from "./create-story-dialog";
+import { getSignedUrl } from "@/hooks/use-signed-url";
 
 interface StoryAuthor {
   id: string;

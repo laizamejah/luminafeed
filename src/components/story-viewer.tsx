@@ -112,7 +112,18 @@ export function StoryViewer({ groups, startIndex, onClose, onViewed }: { groups:
         <div className="absolute inset-0 flex items-center justify-center">
           {url && item.media_type === "image" && <img src={url} alt="" className="max-h-full max-w-full object-contain" />}
           {url && item.media_type === "video" && (
-            <video src={url} autoPlay playsInline preload="metadata" controls={false} onEnded={next} className="max-h-full max-w-full object-contain" />
+            <video
+              key={item.id}
+              src={url}
+              autoPlay
+              muted
+              playsInline
+              preload="auto"
+              controls={false}
+              onEnded={next}
+              onCanPlay={(e) => { e.currentTarget.play().catch(() => {}); }}
+              className="max-h-full max-w-full object-contain"
+            />
           )}
         </div>
 

@@ -63,7 +63,6 @@ export const searchSpotify = createServerFn({ method: "POST" })
     try {
       const token = await getSpotifyToken();
       const params = new URLSearchParams({ q, type: "track", market: "US" });
-      params.set("limit", "20");
       const [spotifyRes, itunesResults] = await Promise.all([
         fetch(`https://api.spotify.com/v1/search?${params.toString()}`, { headers: { Authorization: `Bearer ${token}` } }),
         fetchItunesPreviews(q),

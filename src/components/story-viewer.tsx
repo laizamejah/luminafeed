@@ -64,11 +64,15 @@ export function StoryViewer({ groups, startIndex, onClose, onViewed }: { groups:
   }, [item?.id]);
 
   useEffect(() => {
-    if (!item?.audio_preview_url || !audioRef.current) return;
-    audioRef.current.pause();
-    audioRef.current.currentTime = 0;
+    const audio = audioRef.current;
+    if (!audio) return;
+    audio.pause();
+    audio.currentTime = 0;
     setPlaying(false);
-  }, [item?.audio_preview_url]);
+    if (!item?.audio_preview_url) return;
+    // user tapped to open viewer, so autoplay is allowed
+    audio.play().then(() => setPlaying(true)).catch(() => setPlaying(false));
+  }, [item?.audio_preview_url, item?.id]);
 
   function next() {
     if (!group) return;

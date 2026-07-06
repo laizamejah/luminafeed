@@ -282,43 +282,199 @@ export function PostCard({ post }: { post: FeedPost }) {
       )}
 
       {viewerOpen && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/90 px-3 py-4 sm:px-6">
-          <button onClick={() => setViewerOpen(false)} className="absolute right-4 top-4 z-10 rounded-full bg-black/60 p-2 text-white">✕</button>
-          <div className="relative flex h-full w-full max-w-5xl items-center justify-center">
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setIdx((prev) => (prev > 0 ? prev - 1 : media.length - 1));
-              }}
-              className="absolute left-2 top-1/2 z-10 -translate-y-1/2 rounded-full bg-black/60 px-3 py-2 text-white"
-            >
-              ‹
-            </button>
-            <div className="relative h-full max-h-[90vh] w-full overflow-hidden rounded-[1.5rem] bg-black">
-              <PostMedia
-                path={media[idx].storage_path}
-                type={media[idx].media_type}
-                width={media[idx].width}
-                height={media[idx].height}
-                thumbnailPath={media[idx].thumbnail_path}
-                autoplayOnView={media[idx].media_type === "video"}
-                preload="metadata"
-                unloadOnExit={false}
-                className="h-full w-full"
-              />
-            </div>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setIdx((prev) => (prev < media.length - 1 ? prev + 1 : 0));
-              }}
-              className="absolute right-2 top-1/2 z-10 -translate-y-1/2 rounded-full bg-black/60 px-3 py-2 text-white"
-            >
-              ›
-            </button>
-          </div>
-        </div>
+        <MediaDetailOverlay
+          post={post}
+          media={media}
+          idx={idx}
+          setIdx={setIdx}
+          liked={!!likeState?.liked}
+          likeCount={likeState?.count ?? 0}
+          onLike={() => user ? toggleLike.mutate() : toast.info("Sign in to react")}
+          showMetrics={showMetrics}
+          onClose={() => setViewerOpen(false)}
+        />
       )}
     </article>
+  );
+}
+
+function MediaDetailOverlay({
+  post, media, idx, setIdx, liked, likeCount, onLike, showMetrics, onClose,
+}: {
+  post: FeedPost;
+  media: FeedPost["media"];
+  idx: number;
+  setIdx: (fn: (prev: number) => number) => void;
+  liked: boolean;
+  likeCount: number;
+  onLike: () => void;
+  showMetrics: boolean;
+  onClose: () => void;
+}) {
+  const { data: user } = useCurrentUser();
+  const qc = useQueryClient();
+  const [text, setText] = useState("");
+
+  const { data: comments } = useQuery({
+    queryKey: ["comments", post.id],
+    enabled: post.comments_enabled,
+    queryFn: async () => {
+      const { data } = await supabase.from("comments")
+        .select("id, content, created_at, user_id, author:profiles!comments_user_id_fkey (username, display_name, avatar_url)")
+        .eq("post_id", post.id).order("created_at", { ascending: true });
+      return data ?? [];
+    },
+  });
+
+  const addComment = useMutation({
+    mutationFn: async () => {
+      if (!user || !text.trim()) return;
+      const trimmed = text.trim();
+      const { data: inserted, error } = await supabase.from("comments")
+        .insert({ post_id: post.id, user_id: user.id, content: trimmed })
+        .select("id").maybeSingle();
+      if (error) throw error;
+      if (post.user_id !== user.id) {
+        try {
+          await supabase.from("notifications").insert({
+            user_id: post.user_id, actor_id: user.id, type: "comment",
+            data: { post_id: post.id, comment_id: inserted?.id, text: trimmed.slice(0, 200) },
+          });
+        } catch { /* ignore */ }
+      }
+    },
+    onSuccess: () => {
+      setText("");
+      qc.invalidateQueries({ queryKey: ["comments", post.id] });
+      qc.invalidateQueries({ queryKey: ["comments-count", post.id] });
+    },
+  });
+
+  return (
+    <div className="fixed inset-0 z-[60] flex flex-col bg-black/95 md:flex-row" onClick={onClose}>
+      <button onClick={onClose} className="absolute right-4 top-4 z-20 rounded-full bg-black/70 p-2 text-white" aria-label="Close">
+        <X className="h-5 w-5" />
+      </button>
+
+      {/* Media pane */}
+      <div className="relative flex flex-1 items-center justify-center overflow-hidden" onClick={(e) => e.stopPropagation()}>
+        {media.length > 1 && (
+          <button
+            onClick={() => setIdx((p) => (p > 0 ? p - 1 : media.length - 1))}
+            className="absolute left-2 top-1/2 z-10 -translate-y-1/2 rounded-full bg-black/60 px-3 py-2 text-white"
+            aria-label="Previous"
+          >‹</button>
+        )}
+        <div className="relative flex h-full w-full items-center justify-center p-2 md:p-4">
+          <PostMedia
+            path={media[idx].storage_path}
+            type={media[idx].media_type}
+            width={media[idx].width}
+            height={media[idx].height}
+            thumbnailPath={media[idx].thumbnail_path}
+            autoplayOnView={media[idx].media_type === "video"}
+            preload="auto"
+            unloadOnExit={false}
+            className="h-full max-h-full w-full"
+          />
+        </div>
+        {media.length > 1 && (
+          <button
+            onClick={() => setIdx((p) => (p < media.length - 1 ? p + 1 : 0))}
+            className="absolute right-2 top-1/2 z-10 -translate-y-1/2 rounded-full bg-black/60 px-3 py-2 text-white"
+            aria-label="Next"
+          >›</button>
+        )}
+      </div>
+
+      {/* Info + comments pane */}
+      <aside
+        onClick={(e) => e.stopPropagation()}
+        className="flex max-h-[45vh] w-full flex-col border-t border-border bg-background md:max-h-none md:h-full md:w-[380px] md:border-l md:border-t-0"
+      >
+        <div className="flex items-center gap-3 border-b border-border px-4 py-3">
+          <Link to="/u/$username" params={{ username: post.author.username }}>
+            <AvatarImage path={post.author.avatar_url} name={post.author.display_name ?? post.author.username} size={36} />
+          </Link>
+          <div className="min-w-0 flex-1">
+            <Link to="/u/$username" params={{ username: post.author.username }} className="block truncate text-sm font-medium hover:underline">
+              {post.author.display_name || post.author.username}
+            </Link>
+            <div className="truncate text-xs text-muted-foreground">
+              @{post.author.username} · {formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}
+            </div>
+          </div>
+        </div>
+
+        {post.caption && (
+          <p className="whitespace-pre-wrap border-b border-border px-4 py-3 text-sm">
+            {post.caption}
+          </p>
+        )}
+
+        <div className="flex items-center gap-4 border-b border-border px-4 py-2">
+          <button onClick={onLike} className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground" aria-label="Like">
+            <Heart className={`h-5 w-5 ${liked ? "fill-[color:var(--ochre)] text-[color:var(--ochre)]" : ""}`} />
+            {showMetrics && <span className="tabular-nums">{likeCount}</span>}
+          </button>
+          {post.comments_enabled && (
+            <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
+              <MessageCircle className="h-5 w-5" />
+              <span className="tabular-nums">{comments?.length ?? 0}</span>
+            </span>
+          )}
+        </div>
+
+        {post.comments_enabled ? (
+          <>
+            <div className="flex-1 space-y-4 overflow-y-auto px-4 py-3">
+              {comments?.length === 0 && (
+                <p className="text-sm text-muted-foreground">Be the first to comment.</p>
+              )}
+              {comments?.map((c) => {
+                const author = c.author as unknown as { username: string; display_name: string | null; avatar_url: string | null };
+                return (
+                  <div key={c.id} className="flex gap-2.5">
+                    <AvatarImage path={author.avatar_url} name={author.display_name ?? author.username} size={28} />
+                    <div className="min-w-0 flex-1 text-sm">
+                      <span className="mr-2 font-medium">{author.username}</span>
+                      <span className="break-words">{c.content}</span>
+                      <div className="mt-0.5 text-[11px] text-muted-foreground">
+                        {formatDistanceToNow(new Date(c.created_at), { addSuffix: true })}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            {user && (
+              <div className="flex gap-2 border-t border-border px-3 py-2">
+                <Textarea
+                  rows={1}
+                  value={text}
+                  onChange={(e) => setText(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      addComment.mutate();
+                    }
+                  }}
+                  placeholder="Add a comment…"
+                  className="min-h-9 resize-none"
+                  maxLength={2000}
+                />
+                <Button size="sm" onClick={() => addComment.mutate()} disabled={!text.trim() || addComment.isPending}>
+                  Post
+                </Button>
+              </div>
+            )}
+          </>
+        ) : (
+          <div className="flex-1 p-4 text-center text-sm text-muted-foreground">
+            Comments are off for this post.
+          </div>
+        )}
+      </aside>
+    </div>
   );
 }

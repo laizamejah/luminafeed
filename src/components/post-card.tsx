@@ -390,7 +390,7 @@ function MediaDetailOverlay({
       {/* Info + comments pane */}
       <aside
         onClick={(e) => e.stopPropagation()}
-        className="flex max-h-[45vh] w-full flex-col border-t border-border bg-background md:max-h-none md:h-full md:w-[380px] md:border-l md:border-t-0"
+        className="flex h-[55vh] w-full shrink-0 flex-col border-t border-border bg-background md:h-full md:w-[380px] md:border-l md:border-t-0"
       >
         <div className="flex items-center gap-3 border-b border-border px-4 py-3">
           <Link to="/u/$username" params={{ username: post.author.username }}>

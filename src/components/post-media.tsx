@@ -26,7 +26,7 @@ export function PostMedia({
   className,
   autoplayOnView = false,
   initialMuted = true,
-  preload = "metadata",
+  preload = "auto",
   unloadOnExit = true,
   showMuteButton = true,
 }: PostMediaProps) {
@@ -72,7 +72,7 @@ export function PostMedia({
           }
         }
       },
-      { rootMargin: "160px 0px 160px 0px", threshold: [0, 0.2, 0.5, 1] },
+      { rootMargin: "600px 0px 600px 0px", threshold: [0, 0.2, 0.5, 1] },
     );
     io.observe(shell);
     return () => io.disconnect();

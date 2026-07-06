@@ -6,6 +6,7 @@ import { AvatarImage } from "./avatar-image";
 import { Plus } from "lucide-react";
 import { StoryViewer, type StoryGroup } from "./story-viewer";
 import { CreateStoryDialog } from "./create-story-dialog";
+import { getSignedUrl } from "@/hooks/use-signed-url";
 
 interface StoryAuthor {
   id: string;
@@ -97,6 +98,32 @@ export function StoriesBar() {
   useEffect(() => {
     setViewedIds(new Set(viewedRows.map((row) => row.story_id)));
   }, [viewedRows]);
+
+  // Aggressively prefetch signed URLs + warm image cache so stories open instantly
+  useEffect(() => {
+    if (!stories.length) return;
+    let cancelled = false;
+    (async () => {
+      for (const s of stories) {
+        if (cancelled) return;
+        const key = ["signed", "media", s.storage_path];
+        const cached = queryClient.getQueryData<string>(key);
+        if (cached) {
+          if (s.media_type === "image") { const img = new Image(); img.src = cached; }
+          continue;
+        }
+        try {
+          const url = await queryClient.fetchQuery({
+            queryKey: key,
+            queryFn: () => getSignedUrl("media", s.storage_path),
+            staleTime: 55 * 60 * 1000,
+          });
+          if (s.media_type === "image" && url) { const img = new Image(); img.src = url; }
+        } catch { /* ignore */ }
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [stories, queryClient]);
 
   useEffect(() => {
     const channel = supabase

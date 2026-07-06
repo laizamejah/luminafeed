@@ -33,6 +33,28 @@ export interface SpotifyTrack {
   preview_url: string | null;
 }
 
+interface ItunesTrack {
+  trackName: string;
+  artistName: string;
+  previewUrl?: string;
+}
+
+async function fetchItunesPreviews(query: string): Promise<ItunesTrack[]> {
+  try {
+    const url = `https://itunes.apple.com/search?media=music&entity=song&limit=50&term=${encodeURIComponent(query)}`;
+    const res = await fetch(url);
+    if (!res.ok) return [];
+    const json = (await res.json()) as { results?: ItunesTrack[] };
+    return json.results ?? [];
+  } catch {
+    return [];
+  }
+}
+
+function normalize(s: string): string {
+  return s.toLowerCase().replace(/\(.*?\)|\[.*?\]/g, "").replace(/[^a-z0-9]+/g, "").trim();
+}
+
 export const searchSpotify = createServerFn({ method: "POST" })
   .inputValidator((data: { query: string }) => data)
   .handler(async ({ data }): Promise<SpotifyTrack[]> => {
@@ -40,15 +62,16 @@ export const searchSpotify = createServerFn({ method: "POST" })
     if (!q) return [];
     try {
       const token = await getSpotifyToken();
-      const params = new URLSearchParams({ q, type: "track", market: "US" });
-      const requestUrl = `https://api.spotify.com/v1/search?${params.toString()}`;
-      console.log("spotify search request:", requestUrl);
-      const res = await fetch(requestUrl, { headers: { Authorization: `Bearer ${token}` } });
-      if (!res.ok) {
-        const text = await res.text();
-        throw new Error(`Spotify search failed (${res.status})${text ? `: ${text}` : ""}`);
+      const params = new URLSearchParams({ q, type: "track", market: "US", limit: "20" });
+      const [spotifyRes, itunesResults] = await Promise.all([
+        fetch(`https://api.spotify.com/v1/search?${params.toString()}`, { headers: { Authorization: `Bearer ${token}` } }),
+        fetchItunesPreviews(q),
+      ]);
+      if (!spotifyRes.ok) {
+        const text = await spotifyRes.text();
+        throw new Error(`Spotify search failed (${spotifyRes.status})${text ? `: ${text}` : ""}`);
       }
-      const json = (await res.json()) as {
+      const json = (await spotifyRes.json()) as {
         tracks?: {
           items?: Array<{
             id: string;
@@ -59,13 +82,31 @@ export const searchSpotify = createServerFn({ method: "POST" })
           }>;
         };
       };
-      return (json.tracks?.items ?? []).map((t) => ({
-        id: t.id,
-        title: t.name,
-        artist: t.artists.map((a) => a.name).join(", "),
-        artwork_url: t.album.images[t.album.images.length - 1]?.url ?? null,
-        preview_url: t.preview_url,
-      }));
+
+      const itunesByKey = new Map<string, string>();
+      for (const it of itunesResults) {
+        if (!it.previewUrl) continue;
+        const key = `${normalize(it.trackName)}::${normalize(it.artistName)}`;
+        if (!itunesByKey.has(key)) itunesByKey.set(key, it.previewUrl);
+        const titleOnly = normalize(it.trackName);
+        if (!itunesByKey.has(titleOnly)) itunesByKey.set(titleOnly, it.previewUrl);
+      }
+
+      return (json.tracks?.items ?? []).map((t) => {
+        const firstArtist = t.artists[0]?.name ?? "";
+        const preview =
+          t.preview_url ??
+          itunesByKey.get(`${normalize(t.name)}::${normalize(firstArtist)}`) ??
+          itunesByKey.get(normalize(t.name)) ??
+          null;
+        return {
+          id: t.id,
+          title: t.name,
+          artist: t.artists.map((a) => a.name).join(", "),
+          artwork_url: t.album.images[t.album.images.length - 1]?.url ?? null,
+          preview_url: preview,
+        };
+      });
     } catch (err) {
       const message = err instanceof Error ? err.message : "Spotify search failed";
       console.error("spotify search failed", err);

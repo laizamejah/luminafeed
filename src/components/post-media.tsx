@@ -26,7 +26,7 @@ export function PostMedia({
   className,
   autoplayOnView = false,
   initialMuted = true,
-  preload = "metadata",
+  preload = "auto",
   unloadOnExit = true,
   showMuteButton = true,
 }: PostMediaProps) {

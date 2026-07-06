@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Heart, MessageCircle, Send, MapPin, ThumbsDown, Share2, Music, Play, Pause } from "lucide-react";
+import { Heart, MessageCircle, Send, MapPin, ThumbsDown, Share2, Music, Play, Pause, X } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,6 +8,8 @@ import { AvatarImage } from "./avatar-image";
 import { PostMedia } from "./post-media";
 import { formatDistanceToNow } from "date-fns";
 import { toast } from "sonner";
+import { Textarea } from "./ui/textarea";
+import { Button } from "./ui/button";
 
 export interface FeedPost {
   id: string;

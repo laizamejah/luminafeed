@@ -357,7 +357,7 @@ function MediaDetailOverlay({
       </button>
 
       {/* Media pane */}
-      <div className="relative flex flex-1 items-center justify-center overflow-hidden" onClick={(e) => e.stopPropagation()}>
+      <div className="relative flex min-h-0 flex-1 items-center justify-center overflow-hidden" onClick={(e) => e.stopPropagation()}>
         {media.length > 1 && (
           <button
             onClick={() => setIdx((p) => (p > 0 ? p - 1 : media.length - 1))}

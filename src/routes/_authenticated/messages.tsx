@@ -5,13 +5,15 @@ import { useCurrentUser } from "@/hooks/use-current-user";
 import { AvatarImage } from "@/components/avatar-image";
 import { cn } from "@/lib/utils";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { MoreVertical, Archive, ArchiveRestore, Trash2, Ban } from "lucide-react";
-import { useState } from "react";
+import { MoreVertical, Archive, ArchiveRestore, Trash2, Ban, Search, Settings, PenSquare, ChevronLeft } from "lucide-react";
+import { useState, useMemo } from "react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/messages")({
   component: MessagesLayout,
 });
+
+type MessageTab = "inbox" | "unread" | "communities" | "requests";
 
 interface Partner { id: string; username: string; display_name: string | null; avatar_url: string | null }
 interface Thread { partner: Partner; last: { content: string; created_at: string } }
@@ -22,6 +24,31 @@ function MessagesLayout() {
   const qc = useQueryClient();
   const nav = useNavigate();
   const [showArchived, setShowArchived] = useState(false);
+  const [tab, setTab] = useState<MessageTab>("inbox");
+  const [search, setSearch] = useState("");
+
+  // Active stories (past 24h) — for the "Post a note" horizontal row
+  const { data: activeStoryUsers = [] } = useQuery({
+    queryKey: ["messages-active-stories"],
+    enabled: !!user,
+    queryFn: async () => {
+      const since = new Date(Date.now() - 24 * 3600 * 1000).toISOString();
+      const { data } = await supabase
+        .from("stories")
+        .select("user_id, author:profiles!stories_user_id_fkey (id, username, display_name, avatar_url)")
+        .gte("created_at", since)
+        .order("created_at", { ascending: false });
+      const seen = new Set<string>();
+      const out: Array<{ id: string; username: string; display_name: string | null; avatar_url: string | null }> = [];
+      for (const row of data ?? []) {
+        const a = row.author as unknown as { id: string; username: string; display_name: string | null; avatar_url: string | null } | null;
+        if (!a || seen.has(a.id)) continue;
+        seen.add(a.id);
+        out.push(a);
+      }
+      return out;
+    },
+  });
 
   const { data: blocked = [] } = useQuery({
     queryKey: ["blocked", user?.id],

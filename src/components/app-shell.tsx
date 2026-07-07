@@ -162,14 +162,23 @@ export function AppShell({ children }: { children: ReactNode }) {
   );
 
   return (
-    <div className="min-h-screen bg-background pb-24 lg:pb-0 lg:pl-64 transition-all duration-300">
-      {/* Desktop sidebar — expanded on large screens (desktop) */}
+    <div
+      className="min-h-screen bg-background lg:pl-64 transition-all duration-300"
+      style={{
+        paddingTop: "env(safe-area-inset-top)",
+        paddingBottom: "calc(5.5rem + env(safe-area-inset-bottom))",
+      }}
+    >
+      {/* Desktop sidebar */}
       <aside className="hidden lg:flex fixed inset-y-0 left-0 z-30 w-64 flex-col liquid-glass px-6 py-6 transition-all duration-300">
         {sidebarContent}
       </aside>
 
-      {/* Mobile top bar — liquid glass */}
-      <header className="md:hidden sticky top-0 z-30 flex items-center justify-between liquid-glass px-2 h-14">
+      {/* Mobile top bar — liquid glass, truly fixed */}
+      <header
+        className="md:hidden fixed top-0 inset-x-0 z-40 flex items-center justify-between liquid-glass px-2 h-14"
+        style={{ paddingTop: "env(safe-area-inset-top)", height: "calc(3.5rem + env(safe-area-inset-top))" }}
+      >
         <div className="flex items-center gap-1">
           <Sheet open={mobileNavOpen} onOpenChange={setMobileNavOpen}>
             <SheetTrigger asChild>
@@ -203,15 +212,24 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
       </header>
 
-      <main className="min-h-screen transition-all duration-300">{children}</main>
+      <main
+        className="min-h-screen transition-all duration-300"
+        style={{ paddingTop: "calc(3.5rem + env(safe-area-inset-top))" }}
+      >
+        <div className="lg:pt-0" style={{ marginTop: "calc(-3.5rem - env(safe-area-inset-top))" }} aria-hidden />
+        {children}
+      </main>
 
-      {/* Mobile bottom bar — liquid glass */}
-      <nav className="md:hidden fixed bottom-0 inset-x-0 z-30 liquid-glass">
+      {/* Mobile bottom bar — liquid glass, safe-area aware */}
+      <nav
+        className="md:hidden fixed bottom-0 inset-x-0 z-40 liquid-glass"
+        style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+      >
         <div className="mx-auto grid max-w-lg grid-cols-6 items-center">
           {mobileBottomNav.map((item) => {
             const active = isActive(item.to);
             const Icon = item.icon;
-                if (item.prominent) {
+            if (item.prominent) {
               return (
                 <Link
                   key={item.to}
@@ -219,7 +237,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                   className="flex flex-col items-center justify-center py-2"
                   aria-label={item.label}
                 >
-                      <span className="grid h-11 w-11 place-items-center rounded-2xl bg-primary text-primary-foreground shadow-lg shadow-primary/30 glass-prominent">
+                  <span className="grid h-11 w-11 place-items-center rounded-2xl bg-primary text-primary-foreground shadow-lg shadow-primary/30 glass-prominent">
                     <Icon className="h-5 w-5" />
                   </span>
                 </Link>

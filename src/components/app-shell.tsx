@@ -212,11 +212,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
       </header>
 
-      <main
-        className="min-h-screen transition-all duration-300"
-        style={{ paddingTop: "calc(3.5rem + env(safe-area-inset-top))" }}
-      >
-        <div className="lg:pt-0" style={{ marginTop: "calc(-3.5rem - env(safe-area-inset-top))" }} aria-hidden />
+      <main className="min-h-screen transition-all duration-300 pt-14 md:pt-14 lg:pt-0">
         {children}
       </main>
 

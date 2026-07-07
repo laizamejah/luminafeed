@@ -39,7 +39,10 @@ export function PostMedia({
   const [loaded, setLoaded] = useState(false);
   const [muted, setMuted] = useState(initialMuted);
   const videoRef = useRef<HTMLVideoElement | null>(null);
-  const aspect = width && height ? `${width} / ${height}` : "4 / 5";
+  // Clamp aspect ratio so very tall portraits don't dominate the feed (Facebook-style).
+  const rawAr = width && height ? width / height : 4 / 5;
+  const clampedAr = Math.max(rawAr, 3 / 4); // never taller than 4:3
+  const aspect = `${clampedAr}`;
 
   useEffect(() => {
     setLoaded(false);
@@ -115,8 +118,8 @@ export function PostMedia({
   return (
     <div
       ref={shellRef}
-      className={cn("relative w-full overflow-hidden rounded-[1.25rem] bg-muted will-change-transform", className)}
-      style={{ aspectRatio: aspect, contain: "layout paint" }}
+      className={cn("relative mx-auto w-full overflow-hidden rounded-[1.25rem] bg-black/90 will-change-transform", className)}
+      style={{ aspectRatio: aspect, maxHeight: "70vh", contain: "layout paint" }}
     >
       {(isLoading || (!loaded && type !== "video")) && <div className="absolute inset-0 animate-pulse bg-muted" />}
       {url && type === "image" && (

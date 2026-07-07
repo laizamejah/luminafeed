@@ -158,7 +158,7 @@ export function StoryViewer({ groups, startIndex, onClose, onViewed }: { groups:
                 {playing ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
               </button>
             </div>
-            <audio ref={audioRef} src={item.audio_preview_url} loop preload="none" onEnded={() => setPlaying(false)} className="hidden" />
+            <audio ref={audioRef} src={item.audio_preview_url} loop preload="auto" autoPlay onEnded={() => setPlaying(false)} className="hidden" />
           </div>
         )}
 

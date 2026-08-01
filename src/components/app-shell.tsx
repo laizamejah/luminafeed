@@ -114,6 +114,27 @@ export function AppShell({ children }: { children: ReactNode }) {
   // Close mobile nav on route change
   useEffect(() => { setMobileNavOpen(false); }, [pathname]);
 
+  if (me && (me as { suspended?: boolean }).suspended) {
+    return (
+      <div className="min-h-screen bg-background grid place-items-center px-6 text-center">
+        <div className="max-w-sm">
+          <h1 className="font-serif text-3xl">Account suspended</h1>
+          <p className="mt-3 text-sm text-muted-foreground">
+            Your Lumina account has been suspended by an administrator. Contact support if you believe this is a mistake.
+          </p>
+          <button
+            onClick={() => supabase.auth.signOut()}
+            className="mt-6 rounded-xl border border-border px-4 py-2 text-sm hover:bg-white/5"
+          >
+            Sign out
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+
+
   const sidebarContent = (
     <>
       <Link to="/feed"><Logo /></Link>

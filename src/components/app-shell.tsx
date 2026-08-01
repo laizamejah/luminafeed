@@ -98,8 +98,10 @@ function Badge({ count }: { count: number }) {
 export function AppShell({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { data: me } = useCurrentProfile();
+  const { data: isAdmin } = useIsAdmin();
   const counts = useCounts();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+
 
   const isActive = (to: string) => {
     if (to === "/me") return me ? pathname === `/u/${me.username}` : false;
@@ -152,8 +154,21 @@ export function AppShell({ children }: { children: ReactNode }) {
             <span className="inline">Kids setup</span>
           </Link>
         )}
+        {isAdmin && (
+          <Link
+            to="/admin"
+            className={cn(
+              "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-all justify-start",
+              isActive("/admin") ? "bg-white/10 text-foreground border border-white/10" : "text-muted-foreground hover:text-foreground hover:bg-white/5",
+            )}
+          >
+            <Shield className="h-[18px] w-[18px]" />
+            <span className="inline">Admin</span>
+          </Link>
+        )}
         </nav>
       </div>
+
       <div className="flex items-center justify-between pt-4">
         <Link to="/settings" className="inline-flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground">
           <SettingsIcon className="h-3.5 w-3.5" /> Settings

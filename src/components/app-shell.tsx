@@ -1,14 +1,16 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Home, Play, Radio, PlusSquare, Music, User, Search, Bell, MessageCircle, Map, ShoppingBag, Baby, Settings as SettingsIcon, MoreVertical } from "lucide-react";
+import { Home, Play, Radio, PlusSquare, Music, User, Search, Bell, MessageCircle, Map, ShoppingBag, Baby, Settings as SettingsIcon, MoreVertical, Shield } from "lucide-react";
 import { Logo } from "./logo";
 import { cn } from "@/lib/utils";
 import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCurrentProfile } from "@/hooks/use-current-user";
+import { useIsAdmin } from "@/hooks/use-admin";
 import { supabase } from "@/integrations/supabase/client";
 import { ThemeToggle } from "./theme-provider";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "./ui/sheet";
+
 
 const desktopNav = [
   { to: "/feed" as const, label: "Feed", icon: Home },

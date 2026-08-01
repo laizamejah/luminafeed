@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser, useCurrentProfile } from "@/hooks/use-current-user";
 import { PostMedia } from "@/components/post-media";
 import { AvatarImage } from "@/components/avatar-image";
-import { Heart, MessageCircle, Share2 } from "lucide-react";
+import { Heart, MessageCircle, Share2, Bookmark, MoreHorizontal, Music2 } from "lucide-react";
 import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -16,8 +16,16 @@ interface Reel {
   id: string;
   caption: string | null;
   user_id: string;
+  audio_title?: string | null;
+  audio_artist?: string | null;
   author: { id: string; username: string; display_name: string | null; avatar_url: string | null };
   media: { storage_path: string; media_type: "image" | "video"; width: number | null; height: number | null; thumbnail_path: string | null; position: number }[];
+}
+
+function compact(n: number) {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1).replace(/\.0$/, "")}M`;
+  if (n >= 1_000) return `${(n / 1_000).toFixed(1).replace(/\.0$/, "")}K`;
+  return `${n}`;
 }
 
 function ReelsPage() {
@@ -30,7 +38,7 @@ function ReelsPage() {
     queryFn: async () => {
       let q = supabase
         .from("posts")
-        .select(`id, caption, user_id,
+        .select(`id, caption, user_id, audio_title, audio_artist,
           author:profiles!posts_user_id_fkey (id, username, display_name, avatar_url),
           media:post_media!inner (storage_path, media_type, width, height, thumbnail_path, position)`)
         .eq("is_reel", true)
@@ -53,7 +61,14 @@ function ReelsPage() {
   );
 
   return (
-    <div className="h-[calc(100dvh-5rem)] overflow-y-auto overflow-x-hidden bg-black snap-y snap-mandatory md:h-screen">
+    <div className="fixed inset-0 z-20 overflow-y-auto overflow-x-hidden bg-black snap-y snap-mandatory lg:left-64">
+      {/* Reels title overlay */}
+      <div
+        className="pointer-events-none fixed left-0 right-0 z-30 flex items-center px-4 lg:left-64"
+        style={{ top: "calc(0.75rem + env(safe-area-inset-top))" }}
+      >
+        <span className="pointer-events-auto text-2xl font-semibold tracking-tight text-white drop-shadow-lg">Reels</span>
+      </div>
       {reels.map((r) => <ReelItem key={r.id} reel={r} />)}
     </div>
   );
@@ -64,6 +79,7 @@ function ReelItem({ reel }: { reel: Reel }) {
   const { data: user } = useCurrentUser();
   const media = [...reel.media].sort((a, b) => a.position - b.position)[0];
   const isMobile = useIsMobile();
+  const isOwn = user?.id === reel.user_id;
 
   const { data: likeState } = useQuery({
     queryKey: ["reel-likes", reel.id, user?.id],
@@ -84,6 +100,33 @@ function ReelItem({ reel }: { reel: Reel }) {
       const { count } = await supabase.from("comments").select("*", { count: "exact", head: true }).eq("post_id", reel.id);
       return count ?? 0;
     },
+  });
+
+  const { data: isFollowing } = useQuery({
+    queryKey: ["reel-follow", user?.id, reel.user_id],
+    enabled: !!user?.id && !isOwn,
+    queryFn: async () => {
+      const { data } = await supabase.from("follows").select("tier")
+        .eq("follower_id", user!.id).eq("following_id", reel.user_id).maybeSingle();
+      return !!data;
+    },
+  });
+
+  const toggleFollow = useMutation({
+    mutationFn: async () => {
+      if (!user) return;
+      if (isFollowing) {
+        await supabase.from("follows").delete().eq("follower_id", user.id).eq("following_id", reel.user_id);
+      } else {
+        const { error } = await supabase.from("follows").insert({ follower_id: user.id, following_id: reel.user_id, tier: "public" });
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["reel-follow"] });
+      qc.invalidateQueries({ queryKey: ["profile-counts"] });
+    },
+    onError: (e) => toast.error(e instanceof Error ? e.message : "Could not update follow"),
   });
 
   const toggleLike = useMutation({
@@ -119,8 +162,8 @@ function ReelItem({ reel }: { reel: Reel }) {
   }
 
   return (
-    <div className="relative flex h-[100dvh] w-full items-center justify-center overflow-hidden bg-black snap-start md:h-screen">
-      <div className="relative h-full w-full max-w-[480px]">
+    <div className="relative flex h-[100dvh] w-full items-center justify-center overflow-hidden bg-black snap-start">
+      <div className="relative h-full w-full max-w-[520px]">
         <PostMedia
           path={media.storage_path}
           type="video"
@@ -134,32 +177,93 @@ function ReelItem({ reel }: { reel: Reel }) {
           className="h-full w-full"
         />
       </div>
-      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 to-transparent p-6 text-white">
-        <Link to="/u/$username" params={{ username: reel.author.username }} className="flex items-center gap-3">
-          <AvatarImage path={reel.author.avatar_url} name={reel.author.display_name ?? reel.author.username} size={36} />
-          <span className="font-medium">@{reel.author.username}</span>
-        </Link>
-        {reel.caption && <p className="mt-3 line-clamp-3 whitespace-pre-wrap text-sm">{reel.caption}</p>}
+
+      {/* Bottom author block */}
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent px-4 pb-24 pt-24 text-white">
+        <div className="pointer-events-auto grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 pr-16">
+          <Link to="/u/$username" params={{ username: reel.author.username }} className="flex min-w-0 items-center gap-2.5">
+            <span className="shrink-0">
+              <AvatarImage path={reel.author.avatar_url} name={reel.author.display_name ?? reel.author.username} size={40} />
+            </span>
+            <span className="min-w-0">
+              <span className="block truncate text-[15px] font-semibold">{reel.author.display_name ?? reel.author.username}</span>
+              {(reel.audio_title || reel.audio_artist) && (
+                <span className="flex items-center gap-1 truncate text-xs text-white/80">
+                  <Music2 className="h-3 w-3 shrink-0" />
+                  {[reel.audio_title, reel.audio_artist].filter(Boolean).join(" · ")}
+                </span>
+              )}
+            </span>
+          </Link>
+          {!isOwn && user && (
+            <button
+              onClick={() => toggleFollow.mutate()}
+              className="shrink-0 rounded-full border border-white/70 px-4 py-1.5 text-sm font-medium text-white transition-colors hover:bg-white/15"
+            >
+              {isFollowing ? "Following" : "Follow"}
+            </button>
+          )}
+        </div>
+        {reel.caption && <p className="pointer-events-auto mt-3 line-clamp-2 whitespace-pre-wrap pr-16 text-sm text-white/95">{reel.caption}</p>}
       </div>
-      <div className="absolute bottom-24 right-4 flex flex-col items-center gap-3 text-white">
-        <button
+
+      {/* Right action rail */}
+      <div className="absolute bottom-32 right-3 flex flex-col items-center gap-5 text-white">
+        <RailButton
+          label={compact(likeState?.count ?? 0)}
           onClick={() => (user ? toggleLike.mutate() : toast.info("Sign in to react"))}
-          className="rounded-full bg-white/10 p-3 backdrop-blur"
-          aria-label="Like reel"
+          ariaLabel="Like reel"
         >
-          <Heart className={`h-5 w-5 ${likeState?.liked ? "fill-current text-rose-500" : ""}`} />
-        </button>
-        <span className="text-xs font-medium">{likeState?.count ?? 0}</span>
+          <Heart className={`h-7 w-7 drop-shadow-lg ${likeState?.liked ? "fill-rose-500 text-rose-500" : ""}`} strokeWidth={1.8} />
+        </RailButton>
 
-        <Link to="/p/$postId" params={{ postId: reel.id }} className="rounded-full bg-white/10 p-3 backdrop-blur" aria-label="Comment on reel">
-          <MessageCircle className="h-5 w-5" />
+        <Link to="/p/$postId" params={{ postId: reel.id }} className="flex flex-col items-center gap-1" aria-label="Comment on reel">
+          <MessageCircle className="h-7 w-7 drop-shadow-lg" strokeWidth={1.8} />
+          <span className="text-xs font-semibold drop-shadow">{compact(commentCount)}</span>
         </Link>
-        <span className="text-xs font-medium">{commentCount}</span>
 
-        <button onClick={share} className="rounded-full bg-white/10 p-3 backdrop-blur" aria-label="Share reel">
-          <Share2 className="h-5 w-5" />
-        </button>
+        <RailButton label="Share" onClick={share} ariaLabel="Share reel">
+          <Share2 className="h-7 w-7 drop-shadow-lg" strokeWidth={1.8} />
+        </RailButton>
+
+        <RailButton
+          label="Save"
+          onClick={async () => {
+            try {
+              await navigator.clipboard.writeText(`${window.location.origin}/p/${reel.id}`);
+              toast.success("Reel link saved to clipboard");
+            } catch {
+              toast.error("Could not save reel");
+            }
+          }}
+          ariaLabel="Save reel"
+        >
+          <Bookmark className="h-7 w-7 drop-shadow-lg" strokeWidth={1.8} />
+        </RailButton>
+
+        <RailButton label="" onClick={share} ariaLabel="More options">
+          <MoreHorizontal className="h-6 w-6 drop-shadow-lg" />
+        </RailButton>
       </div>
     </div>
+  );
+}
+
+function RailButton({
+  children,
+  label,
+  onClick,
+  ariaLabel,
+}: {
+  children: React.ReactNode;
+  label: string;
+  onClick: () => void;
+  ariaLabel: string;
+}) {
+  return (
+    <button onClick={onClick} aria-label={ariaLabel} className="flex flex-col items-center gap-1">
+      {children}
+      {label && <span className="text-xs font-semibold drop-shadow">{label}</span>}
+    </button>
   );
 }

@@ -1,14 +1,16 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Home, Play, Radio, PlusSquare, Music, User, Search, Bell, MessageCircle, Map, ShoppingBag, Baby, Settings as SettingsIcon, MoreVertical } from "lucide-react";
+import { Home, Play, Radio, PlusSquare, Music, User, Search, Bell, MessageCircle, Map, ShoppingBag, Baby, Settings as SettingsIcon, MoreVertical, Shield } from "lucide-react";
 import { Logo } from "./logo";
 import { cn } from "@/lib/utils";
 import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCurrentProfile } from "@/hooks/use-current-user";
+import { useIsAdmin } from "@/hooks/use-admin";
 import { supabase } from "@/integrations/supabase/client";
 import { ThemeToggle } from "./theme-provider";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "./ui/sheet";
+
 
 const desktopNav = [
   { to: "/feed" as const, label: "Feed", icon: Home },
@@ -96,8 +98,10 @@ function Badge({ count }: { count: number }) {
 export function AppShell({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { data: me } = useCurrentProfile();
+  const { data: isAdmin } = useIsAdmin();
   const counts = useCounts();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+
 
   const isActive = (to: string) => {
     if (to === "/me") return me ? pathname === `/u/${me.username}` : false;
@@ -109,6 +113,27 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   // Close mobile nav on route change
   useEffect(() => { setMobileNavOpen(false); }, [pathname]);
+
+  if (me && (me as { suspended?: boolean }).suspended) {
+    return (
+      <div className="min-h-screen bg-background grid place-items-center px-6 text-center">
+        <div className="max-w-sm">
+          <h1 className="font-serif text-3xl">Account suspended</h1>
+          <p className="mt-3 text-sm text-muted-foreground">
+            Your Lumina account has been suspended by an administrator. Contact support if you believe this is a mistake.
+          </p>
+          <button
+            onClick={() => supabase.auth.signOut()}
+            className="mt-6 rounded-xl border border-border px-4 py-2 text-sm hover:bg-white/5"
+          >
+            Sign out
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+
 
   const sidebarContent = (
     <>
@@ -150,8 +175,21 @@ export function AppShell({ children }: { children: ReactNode }) {
             <span className="inline">Kids setup</span>
           </Link>
         )}
+        {isAdmin && (
+          <Link
+            to="/admin"
+            className={cn(
+              "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-all justify-start",
+              isActive("/admin") ? "bg-white/10 text-foreground border border-white/10" : "text-muted-foreground hover:text-foreground hover:bg-white/5",
+            )}
+          >
+            <Shield className="h-[18px] w-[18px]" />
+            <span className="inline">Admin</span>
+          </Link>
+        )}
         </nav>
       </div>
+
       <div className="flex items-center justify-between pt-4">
         <Link to="/settings" className="inline-flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground">
           <SettingsIcon className="h-3.5 w-3.5" /> Settings

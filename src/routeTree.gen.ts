@@ -28,6 +28,7 @@ import { Route as AuthenticatedFeedRouteImport } from './routes/_authenticated/f
 import { Route as AuthenticatedDiscoverRouteImport } from './routes/_authenticated/discover'
 import { Route as AuthenticatedCreateRouteImport } from './routes/_authenticated/create'
 import { Route as AuthenticatedMessagesIndexRouteImport } from './routes/_authenticated/messages.index'
+import { Route as AuthenticatedNotificationsNewRouteImport } from './routes/_authenticated/notifications.new'
 import { Route as AuthenticatedMessagesUserIdRouteImport } from './routes/_authenticated/messages.$userId'
 import { Route as AuthenticatedMarketNewRouteImport } from './routes/_authenticated/market.new'
 import { Route as AuthenticatedMarketListingIdRouteImport } from './routes/_authenticated/market.$listingId'
@@ -128,6 +129,12 @@ const AuthenticatedMessagesIndexRoute =
     path: '/',
     getParentRoute: () => AuthenticatedMessagesRoute,
   } as any)
+const AuthenticatedNotificationsNewRoute =
+  AuthenticatedNotificationsNewRouteImport.update({
+    id: '/new',
+    path: '/new',
+    getParentRoute: () => AuthenticatedNotificationsRoute,
+  } as any)
 const AuthenticatedMessagesUserIdRoute =
   AuthenticatedMessagesUserIdRouteImport.update({
     id: '/$userId',
@@ -158,7 +165,7 @@ export interface FileRoutesByFullPath {
   '/market': typeof AuthenticatedMarketRouteWithChildren
   '/me': typeof AuthenticatedMeRoute
   '/messages': typeof AuthenticatedMessagesRouteWithChildren
-  '/notifications': typeof AuthenticatedNotificationsRoute
+  '/notifications': typeof AuthenticatedNotificationsRouteWithChildren
   '/reels': typeof AuthenticatedReelsRoute
   '/search': typeof AuthenticatedSearchRoute
   '/settings': typeof AuthenticatedSettingsRoute
@@ -167,6 +174,7 @@ export interface FileRoutesByFullPath {
   '/market/$listingId': typeof AuthenticatedMarketListingIdRoute
   '/market/new': typeof AuthenticatedMarketNewRoute
   '/messages/$userId': typeof AuthenticatedMessagesUserIdRoute
+  '/notifications/new': typeof AuthenticatedNotificationsNewRoute
   '/messages/': typeof AuthenticatedMessagesIndexRoute
 }
 export interface FileRoutesByTo {
@@ -180,7 +188,7 @@ export interface FileRoutesByTo {
   '/live': typeof AuthenticatedLiveRoute
   '/market': typeof AuthenticatedMarketRouteWithChildren
   '/me': typeof AuthenticatedMeRoute
-  '/notifications': typeof AuthenticatedNotificationsRoute
+  '/notifications': typeof AuthenticatedNotificationsRouteWithChildren
   '/reels': typeof AuthenticatedReelsRoute
   '/search': typeof AuthenticatedSearchRoute
   '/settings': typeof AuthenticatedSettingsRoute
@@ -189,6 +197,7 @@ export interface FileRoutesByTo {
   '/market/$listingId': typeof AuthenticatedMarketListingIdRoute
   '/market/new': typeof AuthenticatedMarketNewRoute
   '/messages/$userId': typeof AuthenticatedMessagesUserIdRoute
+  '/notifications/new': typeof AuthenticatedNotificationsNewRoute
   '/messages': typeof AuthenticatedMessagesIndexRoute
 }
 export interface FileRoutesById {
@@ -205,7 +214,7 @@ export interface FileRoutesById {
   '/_authenticated/market': typeof AuthenticatedMarketRouteWithChildren
   '/_authenticated/me': typeof AuthenticatedMeRoute
   '/_authenticated/messages': typeof AuthenticatedMessagesRouteWithChildren
-  '/_authenticated/notifications': typeof AuthenticatedNotificationsRoute
+  '/_authenticated/notifications': typeof AuthenticatedNotificationsRouteWithChildren
   '/_authenticated/reels': typeof AuthenticatedReelsRoute
   '/_authenticated/search': typeof AuthenticatedSearchRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
@@ -214,6 +223,7 @@ export interface FileRoutesById {
   '/_authenticated/market/$listingId': typeof AuthenticatedMarketListingIdRoute
   '/_authenticated/market/new': typeof AuthenticatedMarketNewRoute
   '/_authenticated/messages/$userId': typeof AuthenticatedMessagesUserIdRoute
+  '/_authenticated/notifications/new': typeof AuthenticatedNotificationsNewRoute
   '/_authenticated/messages/': typeof AuthenticatedMessagesIndexRoute
 }
 export interface FileRouteTypes {
@@ -239,6 +249,7 @@ export interface FileRouteTypes {
     | '/market/$listingId'
     | '/market/new'
     | '/messages/$userId'
+    | '/notifications/new'
     | '/messages/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -261,6 +272,7 @@ export interface FileRouteTypes {
     | '/market/$listingId'
     | '/market/new'
     | '/messages/$userId'
+    | '/notifications/new'
     | '/messages'
   id:
     | '__root__'
@@ -285,6 +297,7 @@ export interface FileRouteTypes {
     | '/_authenticated/market/$listingId'
     | '/_authenticated/market/new'
     | '/_authenticated/messages/$userId'
+    | '/_authenticated/notifications/new'
     | '/_authenticated/messages/'
   fileRoutesById: FileRoutesById
 }
@@ -432,6 +445,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedMessagesIndexRouteImport
       parentRoute: typeof AuthenticatedMessagesRoute
     }
+    '/_authenticated/notifications/new': {
+      id: '/_authenticated/notifications/new'
+      path: '/new'
+      fullPath: '/notifications/new'
+      preLoaderRoute: typeof AuthenticatedNotificationsNewRouteImport
+      parentRoute: typeof AuthenticatedNotificationsRoute
+    }
     '/_authenticated/messages/$userId': {
       id: '/_authenticated/messages/$userId'
       path: '/$userId'
@@ -484,6 +504,20 @@ const AuthenticatedMessagesRouteWithChildren =
     AuthenticatedMessagesRouteChildren,
   )
 
+interface AuthenticatedNotificationsRouteChildren {
+  AuthenticatedNotificationsNewRoute: typeof AuthenticatedNotificationsNewRoute
+}
+
+const AuthenticatedNotificationsRouteChildren: AuthenticatedNotificationsRouteChildren =
+  {
+    AuthenticatedNotificationsNewRoute: AuthenticatedNotificationsNewRoute,
+  }
+
+const AuthenticatedNotificationsRouteWithChildren =
+  AuthenticatedNotificationsRoute._addFileChildren(
+    AuthenticatedNotificationsRouteChildren,
+  )
+
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedCreateRoute: typeof AuthenticatedCreateRoute
   AuthenticatedDiscoverRoute: typeof AuthenticatedDiscoverRoute
@@ -493,7 +527,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedMarketRoute: typeof AuthenticatedMarketRouteWithChildren
   AuthenticatedMeRoute: typeof AuthenticatedMeRoute
   AuthenticatedMessagesRoute: typeof AuthenticatedMessagesRouteWithChildren
-  AuthenticatedNotificationsRoute: typeof AuthenticatedNotificationsRoute
+  AuthenticatedNotificationsRoute: typeof AuthenticatedNotificationsRouteWithChildren
   AuthenticatedReelsRoute: typeof AuthenticatedReelsRoute
   AuthenticatedSearchRoute: typeof AuthenticatedSearchRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
@@ -508,7 +542,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedMarketRoute: AuthenticatedMarketRouteWithChildren,
   AuthenticatedMeRoute: AuthenticatedMeRoute,
   AuthenticatedMessagesRoute: AuthenticatedMessagesRouteWithChildren,
-  AuthenticatedNotificationsRoute: AuthenticatedNotificationsRoute,
+  AuthenticatedNotificationsRoute: AuthenticatedNotificationsRouteWithChildren,
   AuthenticatedReelsRoute: AuthenticatedReelsRoute,
   AuthenticatedSearchRoute: AuthenticatedSearchRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
@@ -528,3 +562,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

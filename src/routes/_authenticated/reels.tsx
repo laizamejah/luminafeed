@@ -61,7 +61,7 @@ function ReelsPage() {
   );
 
   return (
-    <div className="fixed inset-0 z-20 overflow-y-auto overflow-x-hidden bg-black snap-y snap-mandatory lg:left-64">
+    <div className="fixed inset-0 z-20 w-full max-w-full snap-y snap-mandatory overflow-x-hidden overflow-y-auto overscroll-contain bg-black lg:left-64">
       {/* Reels title overlay */}
       <div
         className="pointer-events-none fixed left-0 right-0 z-30 flex items-center px-4 lg:left-64"

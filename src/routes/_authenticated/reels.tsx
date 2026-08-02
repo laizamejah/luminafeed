@@ -160,7 +160,7 @@ function ReelItem({ reel }: { reel: Reel }) {
   }
 
   return (
-    <div className="relative flex h-[100dvh] w-full snap-start items-center justify-center overflow-hidden bg-black">
+    <div className="relative flex h-[calc(100dvh-3.5rem-env(safe-area-inset-top))] w-full snap-start items-center justify-center overflow-hidden bg-black md:h-[100dvh]">
       <div className="relative mx-auto h-full w-full max-w-[480px]">
         <PostMedia
           path={media.storage_path}

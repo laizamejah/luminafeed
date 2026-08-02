@@ -61,7 +61,7 @@ function ReelsPage() {
   );
 
   return (
-    <div className="fixed inset-0 z-20 overflow-y-auto overflow-x-hidden bg-black snap-y snap-mandatory lg:left-64">
+    <div className="fixed inset-0 z-20 w-full max-w-full snap-y snap-mandatory overflow-x-hidden overflow-y-auto overscroll-contain bg-black lg:left-64">
       {/* Reels title overlay */}
       <div
         className="pointer-events-none fixed left-0 right-0 z-30 flex items-center px-4 lg:left-64"
@@ -162,8 +162,8 @@ function ReelItem({ reel }: { reel: Reel }) {
   }
 
   return (
-    <div className="relative flex h-[100dvh] w-full items-center justify-center overflow-hidden bg-black snap-start">
-      <div className="relative h-full w-full max-w-[520px]">
+    <div className="relative flex h-[100dvh] w-full snap-start items-center justify-center overflow-hidden bg-black">
+      <div className="relative mx-auto h-full w-full max-w-[480px]">
         <PostMedia
           path={media.storage_path}
           type="video"
@@ -174,80 +174,99 @@ function ReelItem({ reel }: { reel: Reel }) {
           initialMuted={false}
           preload={isMobile ? "auto" : "metadata"}
           unloadOnExit
+          showMuteButton={false}
+          fill
+          objectFit="contain"
           className="h-full w-full"
         />
-      </div>
 
-      {/* Bottom author block */}
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent px-4 pb-24 pt-24 text-white">
-        <div className="pointer-events-auto grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 pr-16">
-          <Link to="/u/$username" params={{ username: reel.author.username }} className="flex min-w-0 items-center gap-2.5">
-            <span className="shrink-0">
-              <AvatarImage path={reel.author.avatar_url} name={reel.author.display_name ?? reel.author.username} size={40} />
+        {/* Right action rail — YouTube Shorts style */}
+        <div
+          className="absolute right-2 z-20 flex flex-col items-center gap-6 text-white"
+          style={{ bottom: "calc(7.5rem + env(safe-area-inset-bottom))" }}
+        >
+          <RailButton
+            label={compact(likeState?.count ?? 0)}
+            onClick={() => (user ? toggleLike.mutate() : toast.info("Sign in to react"))}
+            ariaLabel="Like reel"
+          >
+            <Heart className={`h-7 w-7 ${likeState?.liked ? "fill-rose-500 text-rose-500" : ""}`} strokeWidth={1.8} />
+          </RailButton>
+
+          <Link
+            to="/p/$postId"
+            params={{ postId: reel.id }}
+            className="flex flex-col items-center gap-1.5"
+            aria-label="Comment on reel"
+          >
+            <span className="grid h-11 w-11 place-items-center rounded-full bg-white/10 backdrop-blur-md">
+              <MessageCircle className="h-7 w-7" strokeWidth={1.8} />
             </span>
-            <span className="min-w-0">
-              <span className="block truncate text-[15px] font-semibold">{reel.author.display_name ?? reel.author.username}</span>
-              {(reel.audio_title || reel.audio_artist) && (
-                <span className="flex items-center gap-1 truncate text-xs text-white/80">
-                  <Music2 className="h-3 w-3 shrink-0" />
-                  {[reel.audio_title, reel.audio_artist].filter(Boolean).join(" · ")}
-                </span>
-              )}
-            </span>
+            <span className="text-[11px] font-semibold">{compact(commentCount)}</span>
           </Link>
-          {!isOwn && user && (
-            <button
-              onClick={() => toggleFollow.mutate()}
-              className="shrink-0 rounded-full border border-white/70 px-4 py-1.5 text-sm font-medium text-white transition-colors hover:bg-white/15"
-            >
-              {isFollowing ? "Following" : "Follow"}
-            </button>
+
+          <RailButton label="Share" onClick={share} ariaLabel="Share reel">
+            <Share2 className="h-6 w-6" strokeWidth={1.8} />
+          </RailButton>
+
+          <RailButton
+            label="Save"
+            onClick={async () => {
+              try {
+                await navigator.clipboard.writeText(`${window.location.origin}/p/${reel.id}`);
+                toast.success("Reel link saved to clipboard");
+              } catch {
+                toast.error("Could not save reel");
+              }
+            }}
+            ariaLabel="Save reel"
+          >
+            <Bookmark className="h-6 w-6" strokeWidth={1.8} />
+          </RailButton>
+
+          <RailButton label="" onClick={share} ariaLabel="More options">
+            <MoreHorizontal className="h-6 w-6" />
+          </RailButton>
+        </div>
+
+        {/* Bottom author block */}
+        <div
+          className="pointer-events-none absolute inset-x-0 bottom-0 z-10 bg-gradient-to-t from-black/90 via-black/45 to-transparent px-3 pt-20 text-white"
+          style={{ paddingBottom: "calc(5.75rem + env(safe-area-inset-bottom))" }}
+        >
+          <div className="pointer-events-auto grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 pr-16">
+            <Link to="/u/$username" params={{ username: reel.author.username }} className="flex min-w-0 items-center gap-2.5">
+              <span className="shrink-0">
+                <AvatarImage path={reel.author.avatar_url} name={reel.author.display_name ?? reel.author.username} size={36} />
+              </span>
+              <span className="min-w-0 truncate text-[15px] font-semibold">
+                {reel.author.display_name ?? reel.author.username}
+              </span>
+            </Link>
+            {!isOwn && user && (
+              <button
+                onClick={() => toggleFollow.mutate()}
+                className="shrink-0 rounded-full border border-white/70 px-4 py-1.5 text-sm font-medium text-white transition-colors hover:bg-white/15"
+              >
+                {isFollowing ? "Following" : "Follow"}
+              </button>
+            )}
+          </div>
+          {reel.caption && (
+            <p className="pointer-events-auto mt-2 line-clamp-2 whitespace-pre-wrap pr-16 text-sm text-white/95">{reel.caption}</p>
+          )}
+          {(reel.audio_title || reel.audio_artist) && (
+            <span className="pointer-events-auto mt-2 flex items-center gap-1 truncate pr-16 text-xs text-white/80">
+              <Music2 className="h-3 w-3 shrink-0" />
+              {[reel.audio_title, reel.audio_artist].filter(Boolean).join(" · ")}
+            </span>
           )}
         </div>
-        {reel.caption && <p className="pointer-events-auto mt-3 line-clamp-2 whitespace-pre-wrap pr-16 text-sm text-white/95">{reel.caption}</p>}
-      </div>
-
-      {/* Right action rail */}
-      <div className="absolute bottom-32 right-3 flex flex-col items-center gap-5 text-white">
-        <RailButton
-          label={compact(likeState?.count ?? 0)}
-          onClick={() => (user ? toggleLike.mutate() : toast.info("Sign in to react"))}
-          ariaLabel="Like reel"
-        >
-          <Heart className={`h-7 w-7 drop-shadow-lg ${likeState?.liked ? "fill-rose-500 text-rose-500" : ""}`} strokeWidth={1.8} />
-        </RailButton>
-
-        <Link to="/p/$postId" params={{ postId: reel.id }} className="flex flex-col items-center gap-1" aria-label="Comment on reel">
-          <MessageCircle className="h-7 w-7 drop-shadow-lg" strokeWidth={1.8} />
-          <span className="text-xs font-semibold drop-shadow">{compact(commentCount)}</span>
-        </Link>
-
-        <RailButton label="Share" onClick={share} ariaLabel="Share reel">
-          <Share2 className="h-7 w-7 drop-shadow-lg" strokeWidth={1.8} />
-        </RailButton>
-
-        <RailButton
-          label="Save"
-          onClick={async () => {
-            try {
-              await navigator.clipboard.writeText(`${window.location.origin}/p/${reel.id}`);
-              toast.success("Reel link saved to clipboard");
-            } catch {
-              toast.error("Could not save reel");
-            }
-          }}
-          ariaLabel="Save reel"
-        >
-          <Bookmark className="h-7 w-7 drop-shadow-lg" strokeWidth={1.8} />
-        </RailButton>
-
-        <RailButton label="" onClick={share} ariaLabel="More options">
-          <MoreHorizontal className="h-6 w-6 drop-shadow-lg" />
-        </RailButton>
       </div>
     </div>
   );
 }
+
 
 function RailButton({
   children,
@@ -261,9 +280,12 @@ function RailButton({
   ariaLabel: string;
 }) {
   return (
-    <button onClick={onClick} aria-label={ariaLabel} className="flex flex-col items-center gap-1">
-      {children}
-      {label && <span className="text-xs font-semibold drop-shadow">{label}</span>}
+    <button onClick={onClick} aria-label={ariaLabel} className="flex flex-col items-center gap-1.5">
+      <span className="grid h-11 w-11 place-items-center rounded-full bg-white/10 backdrop-blur-md transition-colors active:bg-white/20">
+        {children}
+      </span>
+      {label && <span className="text-[11px] font-semibold">{label}</span>}
     </button>
   );
+
 }

@@ -155,28 +155,38 @@ export function PostCard({ post }: { post: FeedPost }) {
   }
 
   return (
-    <article ref={cardRef} className="mx-auto w-full max-w-2xl border-b border-border/60 py-5 sm:py-6">
+    <article ref={cardRef} className="mx-auto w-full max-w-2xl overflow-hidden border-b-[6px] border-border/40 bg-card">
       {/* Header */}
-      <div className="mb-3 flex items-center gap-3 px-3 sm:px-4">
-        <Link to="/u/$username" params={{ username: post.author.username }}>
+      <div className="flex items-center gap-3 px-3 pb-2 pt-3 sm:px-4">
+        <Link to="/u/$username" params={{ username: post.author.username }} className="shrink-0">
           <AvatarImage path={post.author.avatar_url} name={post.author.display_name ?? post.author.username} size={40} />
         </Link>
-        <div className="flex-1 min-w-0">
-          <Link to="/u/$username" params={{ username: post.author.username }} className="font-medium text-sm hover:underline">
+        <div className="min-w-0 flex-1">
+          <Link to="/u/$username" params={{ username: post.author.username }} className="block truncate text-[15px] font-semibold hover:underline">
             {post.author.display_name || post.author.username}
           </Link>
-          <div className="text-xs text-muted-foreground flex items-center gap-2 flex-wrap">
-            <span>@{post.author.username}</span>
+          <div className="flex min-w-0 items-center gap-1.5 truncate text-xs text-muted-foreground">
+            <span className="truncate">@{post.author.username}</span>
             <span>·</span>
-            <time>{formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}</time>
-            {post.location_name && (<><span>·</span><span className="inline-flex items-center gap-1"><MapPin className="h-3 w-3" />{post.location_name}</span></>)}
+            <time className="shrink-0">{formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}</time>
+            {post.location_name && (
+              <>
+                <span>·</span>
+                <span className="inline-flex min-w-0 items-center gap-1 truncate"><MapPin className="h-3 w-3 shrink-0" />{post.location_name}</span>
+              </>
+            )}
           </div>
         </div>
       </div>
 
+      {/* Text body — Facebook style, above the media */}
+      {post.caption && (
+        <p className="whitespace-pre-wrap break-words px-3 pb-3 text-[15px] leading-snug sm:px-4">{post.caption}</p>
+      )}
+
       {/* Media */}
       {media.length > 0 && (
-        <div className="relative mx-3 overflow-hidden rounded-[1.35rem] border border-border/60 bg-muted shadow-sm sm:mx-4">
+        <div className="relative w-full overflow-hidden bg-muted">
           <div
             role="button"
             tabIndex={0}
@@ -198,6 +208,7 @@ export function PostCard({ post }: { post: FeedPost }) {
               autoplayOnView={media[idx].media_type === "video"}
               preload="metadata"
               unloadOnExit
+              className="rounded-none"
             />
           </div>
           {media.length > 1 && (
@@ -218,7 +229,7 @@ export function PostCard({ post }: { post: FeedPost }) {
 
       {/* Music strip */}
       {post.audio_preview_url && (
-        <div className="mt-3 mx-3 flex items-center gap-3 rounded-xl border border-border/70 bg-secondary/40 px-3 py-2 sm:mx-4">
+        <div className="mx-3 mt-3 flex items-center gap-3 rounded-xl border border-border/70 bg-secondary/40 px-3 py-2 sm:mx-4">
           {post.audio_artwork_url ? (
             <img src={post.audio_artwork_url} alt="" className="h-9 w-9 rounded" />
           ) : (
@@ -236,50 +247,43 @@ export function PostCard({ post }: { post: FeedPost }) {
       )}
 
       {/* Actions */}
-      <div className="mt-4 flex items-center gap-4 px-3 sm:px-4">
+      <div className="mt-1 grid grid-cols-4 items-center border-t border-border/60 px-1 py-1 text-muted-foreground">
         <button
           onClick={() => user ? toggleLike.mutate() : toast.info("Sign in to react")}
-          className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
+          className="flex items-center justify-center gap-2 rounded-lg py-2 text-sm transition-colors hover:bg-secondary/60 hover:text-foreground"
           aria-label="Like"
         >
           <Heart className={`h-5 w-5 ${likeState?.liked ? "fill-[color:var(--ochre)] text-[color:var(--ochre)]" : ""}`} />
-          {showMetrics && <span className="tabular-nums">{likeState?.count ?? 0}</span>}
+          {showMetrics && <span className="tabular-nums text-xs">{likeState?.count ?? 0}</span>}
         </button>
 
         <button
           onClick={() => user ? toggleDislike.mutate() : toast.info("Sign in to react")}
-          className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
+          className="flex items-center justify-center gap-2 rounded-lg py-2 text-sm transition-colors hover:bg-secondary/60 hover:text-foreground"
           aria-label="Dislike"
         >
           <ThumbsDown className={`h-5 w-5 ${dislikeState?.disliked ? "fill-current" : ""}`} />
-          {showMetrics && <span className="tabular-nums">{dislikeState?.count ?? 0}</span>}
+          {showMetrics && <span className="tabular-nums text-xs">{dislikeState?.count ?? 0}</span>}
         </button>
 
         {post.comments_enabled ? (
-          <Link to="/p/$postId" params={{ postId: post.id }} className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground" aria-label="Comment">
+          <Link to="/p/$postId" params={{ postId: post.id }} className="flex items-center justify-center gap-2 rounded-lg py-2 text-sm transition-colors hover:bg-secondary/60 hover:text-foreground" aria-label="Comment">
             <MessageCircle className="h-5 w-5" />
-            {showMetrics && <span className="tabular-nums">{commentCount ?? 0}</span>}
+            {showMetrics && <span className="tabular-nums text-xs">{commentCount ?? 0}</span>}
           </Link>
         ) : me && me.id !== post.user_id ? (
-          <Link to="/messages/$userId" params={{ userId: post.user_id }} className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
-            <Send className="h-5 w-5" /><span className="text-xs">DM privately</span>
+          <Link to="/messages/$userId" params={{ userId: post.user_id }} className="flex items-center justify-center gap-2 rounded-lg py-2 text-sm transition-colors hover:bg-secondary/60 hover:text-foreground">
+            <Send className="h-5 w-5" /><span className="text-xs">DM</span>
           </Link>
         ) : (
-          <span className="flex items-center gap-1.5 text-sm text-muted-foreground/60"><MessageCircle className="h-5 w-5" /><span className="text-xs">Comments off</span></span>
+          <span className="flex items-center justify-center gap-2 py-2 text-sm text-muted-foreground/60"><MessageCircle className="h-5 w-5" /></span>
         )}
 
-        <button onClick={share} className="ml-auto flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground" aria-label="Share">
+        <button onClick={share} className="flex items-center justify-center gap-2 rounded-lg py-2 text-sm transition-colors hover:bg-secondary/60 hover:text-foreground" aria-label="Share">
           <Share2 className="h-5 w-5" />
         </button>
       </div>
 
-      {/* Caption */}
-      {post.caption && (
-        <p className="mt-3 whitespace-pre-wrap px-3 text-sm sm:px-4">
-          <Link to="/u/$username" params={{ username: post.author.username }} className="font-medium mr-2">{post.author.username}</Link>
-          {post.caption}
-        </p>
-      )}
 
       {viewerOpen && (
         <MediaDetailOverlay

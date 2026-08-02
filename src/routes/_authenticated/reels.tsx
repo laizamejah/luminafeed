@@ -280,9 +280,12 @@ function RailButton({
   ariaLabel: string;
 }) {
   return (
-    <button onClick={onClick} aria-label={ariaLabel} className="flex flex-col items-center gap-1">
-      {children}
-      {label && <span className="text-xs font-semibold drop-shadow">{label}</span>}
+    <button onClick={onClick} aria-label={ariaLabel} className="flex flex-col items-center gap-1.5">
+      <span className="grid h-11 w-11 place-items-center rounded-full bg-white/10 backdrop-blur-md transition-colors active:bg-white/20">
+        {children}
+      </span>
+      {label && <span className="text-[11px] font-semibold">{label}</span>}
     </button>
   );
+
 }

@@ -121,11 +121,17 @@ export function PostMedia({
     if (!next) el.play().catch(() => {});
   }
 
+  const fitClass = objectFit === "contain" ? "object-contain" : "object-cover";
+
   return (
     <div
       ref={shellRef}
-      className={cn("relative mx-auto w-full overflow-hidden rounded-[1.25rem] bg-black/90 will-change-transform", className)}
-      style={{ aspectRatio: aspect, maxHeight: "70vh", contain: "layout paint" }}
+      className={cn(
+        "relative mx-auto w-full max-w-full overflow-hidden bg-black/90 will-change-transform",
+        fill ? "h-full rounded-none" : "rounded-[1.25rem]",
+        className,
+      )}
+      style={fill ? { contain: "layout paint" } : { aspectRatio: aspect, maxHeight: "70vh", contain: "layout paint" }}
     >
       {(isLoading || (!loaded && type !== "video")) && <div className="absolute inset-0 animate-pulse bg-muted" />}
       {url && type === "image" && (
@@ -133,7 +139,7 @@ export function PostMedia({
           src={url}
           alt=""
           onLoad={() => setLoaded(true)}
-          className={cn("h-full w-full object-cover transition-opacity duration-500", loaded ? "opacity-100" : "opacity-0")}
+          className={cn("h-full w-full transition-opacity duration-500", fitClass, loaded ? "opacity-100" : "opacity-0")}
         />
       )}
       {type === "video" && (
@@ -151,8 +157,9 @@ export function PostMedia({
             onCanPlay={() => {
               if (autoplayOnView && isInView) videoRef.current?.play().catch(() => {});
             }}
-            className={cn("h-full w-full object-cover transition-opacity duration-300", hasRendered ? "opacity-100" : "opacity-0")}
+            className={cn("h-full w-full transition-opacity duration-300", fitClass, hasRendered ? "opacity-100" : "opacity-0")}
           />
+
           {!posterUrl && !loaded && <div className="pointer-events-none absolute inset-0 animate-pulse bg-muted" />}
           {autoplayOnView && showMuteButton && url && (
             <button

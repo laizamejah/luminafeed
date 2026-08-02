@@ -61,14 +61,12 @@ function ReelsPage() {
   );
 
   return (
-    <div className="fixed inset-0 z-20 w-full max-w-full snap-y snap-mandatory overflow-x-hidden overflow-y-auto overscroll-contain bg-black lg:left-64">
+    <div className="fixed inset-x-0 bottom-0 top-[calc(3.5rem+env(safe-area-inset-top))] z-20 w-full max-w-full snap-y snap-mandatory overflow-x-hidden overflow-y-auto overscroll-contain bg-black md:top-0 lg:left-64">
       {/* Reels title overlay */}
-      <div
-        className="pointer-events-none fixed left-0 right-0 z-30 flex items-center px-4 lg:left-64"
-        style={{ top: "calc(0.75rem + env(safe-area-inset-top))" }}
-      >
-        <span className="pointer-events-auto text-2xl font-semibold tracking-tight text-white drop-shadow-lg">Reels</span>
+      <div className="pointer-events-none sticky top-0 z-30 hidden h-0 items-center px-4 md:flex lg:left-64">
+        <span className="pointer-events-auto pt-4 text-2xl font-semibold tracking-tight text-white drop-shadow-lg">Reels</span>
       </div>
+
       {reels.map((r) => <ReelItem key={r.id} reel={r} />)}
     </div>
   );
@@ -162,7 +160,7 @@ function ReelItem({ reel }: { reel: Reel }) {
   }
 
   return (
-    <div className="relative flex h-[100dvh] w-full snap-start items-center justify-center overflow-hidden bg-black">
+    <div className="relative flex h-[calc(100dvh-3.5rem-env(safe-area-inset-top))] w-full snap-start items-center justify-center overflow-hidden bg-black md:h-[100dvh]">
       <div className="relative mx-auto h-full w-full max-w-[480px]">
         <PostMedia
           path={media.storage_path}

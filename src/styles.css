@@ -100,20 +100,20 @@
 /* iPhone-style liquid glass utility */
 .liquid-glass {
   /* configurable variables */
-  --liquid-blur: 18px;
-  --liquid-saturate: 120%;
-  --liquid-opacity: 0.12;
-  --liquid-border: rgba(255,255,255,0.12);
-  --liquid-shadow: 0 8px 30px rgba(10,10,10,0.08);
+  --liquid-blur: 40px;
+  --liquid-saturate: 190%;
+  --liquid-opacity: 0.06;
+  --liquid-border: rgba(255,255,255,0.22);
+  --liquid-shadow: 0 12px 40px rgba(10,10,10,0.10);
   position: relative;
   background-color: rgba(255,255,255,var(--liquid-opacity));
-  -webkit-backdrop-filter: blur(var(--liquid-blur)) saturate(var(--liquid-saturate));
-  backdrop-filter: blur(var(--liquid-blur)) saturate(var(--liquid-saturate));
+  backdrop-filter: blur(var(--liquid-blur)) saturate(var(--liquid-saturate)) brightness(108%);
   border: 1px solid var(--liquid-border);
-  box-shadow: var(--liquid-shadow), inset 0 1px 0 rgba(255,255,255,0.06);
-  background-image: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
-  transition: background-color 240ms ease, border-color 240ms ease, box-shadow 240ms ease, backdrop-filter 240ms ease, -webkit-backdrop-filter 240ms ease;
+  box-shadow: var(--liquid-shadow), inset 0 1px 0 rgba(255,255,255,0.28), inset 0 -1px 0 rgba(255,255,255,0.06);
+  background-image: linear-gradient(180deg, rgba(255,255,255,0.14), rgba(255,255,255,0.03) 45%, rgba(255,255,255,0.08));
+  transition: background-color 240ms ease, border-color 240ms ease, box-shadow 240ms ease, backdrop-filter 240ms ease;
 }
+
 
 .liquid-glass::before {
   /* subtle repeating noise overlay (SVG data URI) */
@@ -141,12 +141,14 @@
 }
 
 .dark .liquid-glass {
-  --liquid-opacity: 0.18;
-  --liquid-border: rgba(255,255,255,0.04);
-  --liquid-shadow: 0 8px 30px rgba(0,0,0,0.6);
-  background-color: rgba(10,10,10,var(--liquid-opacity));
-  background-image: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+  --liquid-opacity: 0.22;
+  --liquid-border: rgba(255,255,255,0.10);
+  --liquid-shadow: 0 12px 40px rgba(0,0,0,0.65);
+  background-color: rgba(12,12,14,var(--liquid-opacity));
+  background-image: linear-gradient(180deg, rgba(255,255,255,0.07), rgba(255,255,255,0.015) 45%, rgba(255,255,255,0.04));
+  box-shadow: var(--liquid-shadow), inset 0 1px 0 rgba(255,255,255,0.14);
 }
+
 
 /* Slight elevated ring for the prominent create button */
 .glass-prominent {

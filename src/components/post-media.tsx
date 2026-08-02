@@ -15,6 +15,9 @@ interface PostMediaProps {
   preload?: "none" | "metadata" | "auto";
   unloadOnExit?: boolean;
   showMuteButton?: boolean;
+  /** Fill the parent container instead of using an intrinsic aspect ratio. */
+  fill?: boolean;
+  objectFit?: "cover" | "contain";
 }
 
 export function PostMedia({
@@ -29,7 +32,10 @@ export function PostMedia({
   preload = "auto",
   unloadOnExit = true,
   showMuteButton = true,
+  fill = false,
+  objectFit = "cover",
 }: PostMediaProps) {
+
   const shellRef = useRef<HTMLDivElement | null>(null);
   const [shouldLoadVideo, setShouldLoadVideo] = useState(type !== "video");
   const [isInView, setIsInView] = useState(type !== "video");

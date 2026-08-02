@@ -201,22 +201,23 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <div
-      className="min-h-screen bg-background lg:pl-64 transition-all duration-300"
+      className="min-h-screen w-full max-w-full overflow-x-clip bg-background lg:pl-64"
       style={{
         paddingTop: "env(safe-area-inset-top)",
         paddingBottom: "calc(5.5rem + env(safe-area-inset-bottom))",
       }}
     >
       {/* Desktop sidebar */}
-      <aside className="hidden lg:flex fixed inset-y-0 left-0 z-30 w-64 flex-col liquid-glass px-6 py-6 transition-all duration-300">
+      <aside className="hidden lg:flex fixed inset-y-0 left-0 z-30 w-64 flex-col liquid-glass px-6 py-6">
         {sidebarContent}
       </aside>
 
       {/* Mobile top bar — liquid glass, truly fixed */}
       <header
-        className="md:hidden fixed top-0 inset-x-0 z-40 flex items-center justify-between liquid-glass px-2 h-14"
-        style={{ paddingTop: "env(safe-area-inset-top)", height: "calc(3.5rem + env(safe-area-inset-top))" }}
+        className="md:hidden fixed top-0 inset-x-0 z-40 flex items-center justify-between liquid-glass border-x-0 border-t-0 px-2"
+        style={{ position: "fixed", paddingTop: "env(safe-area-inset-top)", height: "calc(3.5rem + env(safe-area-inset-top))" }}
       >
+
         <div className="flex items-center gap-1">
           <Sheet open={mobileNavOpen} onOpenChange={setMobileNavOpen}>
             <SheetTrigger asChild>

@@ -166,3 +166,10 @@
 
 /* leaflet dark tweaks */
 .leaflet-container { background: var(--color-muted); font-family: var(--font-sans); }
+
+/* Prevent horizontal drift on mobile */
+html,
+body {
+  max-width: 100%;
+  overflow-x: hidden;
+}

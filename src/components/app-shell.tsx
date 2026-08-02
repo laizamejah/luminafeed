@@ -251,15 +251,16 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
       </header>
 
-      <main className="min-h-screen transition-all duration-300 pt-14 md:pt-14 lg:pt-0">
+      <main className="w-full max-w-full overflow-x-clip pt-14 md:pt-14 lg:pt-0">
         {children}
       </main>
 
       {/* Mobile bottom bar — liquid glass, safe-area aware */}
       <nav
-        className="md:hidden fixed bottom-0 inset-x-0 z-40 liquid-glass"
-        style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+        className="md:hidden fixed bottom-0 inset-x-0 z-40 liquid-glass border-x-0 border-b-0"
+        style={{ position: "fixed", paddingBottom: "env(safe-area-inset-bottom)" }}
       >
+
         <div className="mx-auto grid max-w-lg grid-cols-6 items-center">
           {mobileBottomNav.map((item) => {
             const active = isActive(item.to);

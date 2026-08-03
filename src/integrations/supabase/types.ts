@@ -37,13 +37,17 @@ export type Database = {
           content: string
           created_at: string
           id: string
+          media_kind: string | null
+          media_url: string | null
           post_id: string
           user_id: string
         }
         Insert: {
-          content: string
+          content?: string
           created_at?: string
           id?: string
+          media_kind?: string | null
+          media_url?: string | null
           post_id: string
           user_id: string
         }
@@ -51,6 +55,8 @@ export type Database = {
           content?: string
           created_at?: string
           id?: string
+          media_kind?: string | null
+          media_url?: string | null
           post_id?: string
           user_id?: string
         }

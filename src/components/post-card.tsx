@@ -315,42 +315,11 @@ function MediaDetailOverlay({
   showMetrics: boolean;
   onClose: () => void;
 }) {
-  const { data: user } = useCurrentUser();
-  const qc = useQueryClient();
-  const [text, setText] = useState("");
-
-  const { data: comments } = useQuery({
-    queryKey: ["comments", post.id],
-    enabled: post.comments_enabled,
+  const { data: commentCount } = useQuery({
+    queryKey: ["comments-count", post.id],
     queryFn: async () => {
-      const { data } = await supabase.from("comments")
-        .select("id, content, created_at, user_id, author:profiles!comments_user_id_fkey (username, display_name, avatar_url)")
-        .eq("post_id", post.id).order("created_at", { ascending: true });
-      return data ?? [];
-    },
-  });
-
-  const addComment = useMutation({
-    mutationFn: async () => {
-      if (!user || !text.trim()) return;
-      const trimmed = text.trim();
-      const { data: inserted, error } = await supabase.from("comments")
-        .insert({ post_id: post.id, user_id: user.id, content: trimmed })
-        .select("id").maybeSingle();
-      if (error) throw error;
-      if (post.user_id !== user.id) {
-        try {
-          await supabase.from("notifications").insert({
-            user_id: post.user_id, actor_id: user.id, type: "comment",
-            data: { post_id: post.id, comment_id: inserted?.id, text: trimmed.slice(0, 200) },
-          });
-        } catch { /* ignore */ }
-      }
-    },
-    onSuccess: () => {
-      setText("");
-      qc.invalidateQueries({ queryKey: ["comments", post.id] });
-      qc.invalidateQueries({ queryKey: ["comments-count", post.id] });
+      const { count } = await supabase.from("comments").select("*", { count: "exact", head: true }).eq("post_id", post.id);
+      return count ?? 0;
     },
   });
 
@@ -424,64 +393,13 @@ function MediaDetailOverlay({
           {post.comments_enabled && (
             <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
               <MessageCircle className="h-5 w-5" />
-              <span className="tabular-nums">{comments?.length ?? 0}</span>
+              <span className="tabular-nums">{commentCount ?? 0}</span>
             </span>
           )}
         </div>
 
         {post.comments_enabled ? (
-          <>
-            <div className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-4 py-3">
-              {comments?.length === 0 && (
-                <p className="text-sm text-muted-foreground">Be the first to comment.</p>
-              )}
-              {comments?.map((c) => {
-                const author = c.author as unknown as { username: string; display_name: string | null; avatar_url: string | null };
-                return (
-                  <div key={c.id} className="flex gap-2.5">
-                    <Link to="/u/$username" params={{ username: author.username }} onClick={onClose}>
-                      <AvatarImage path={author.avatar_url} name={author.display_name ?? author.username} size={28} />
-                    </Link>
-                    <div className="min-w-0 flex-1 text-sm">
-                      <Link
-                        to="/u/$username"
-                        params={{ username: author.username }}
-                        onClick={onClose}
-                        className="mr-2 font-medium hover:underline"
-                      >
-                        {author.username}
-                      </Link>
-                      <span className="break-words">{c.content}</span>
-                      <div className="mt-0.5 text-[11px] text-muted-foreground">
-                        {formatDistanceToNow(new Date(c.created_at), { addSuffix: true })}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-            {user && (
-              <div className="flex gap-2 border-t border-border px-3 py-2">
-                <Textarea
-                  rows={1}
-                  value={text}
-                  onChange={(e) => setText(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && !e.shiftKey) {
-                      e.preventDefault();
-                      addComment.mutate();
-                    }
-                  }}
-                  placeholder="Add a comment…"
-                  className="min-h-9 resize-none"
-                  maxLength={2000}
-                />
-                <Button size="sm" onClick={() => addComment.mutate()} disabled={!text.trim() || addComment.isPending}>
-                  Post
-                </Button>
-              </div>
-            )}
-          </>
+          <CommentsPanel postId={post.id} postOwnerId={post.user_id} onNavigate={onClose} />
         ) : (
           <div className="flex-1 p-4 text-center text-sm text-muted-foreground">
             Comments are off for this post.
@@ -491,3 +409,4 @@ function MediaDetailOverlay({
     </div>
   );
 }
+

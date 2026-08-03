@@ -4,6 +4,8 @@ import { fetchFeed } from "@/lib/feed";
 import { PostCard } from "@/components/post-card";
 import { PostComposer } from "@/components/post-composer";
 import { StoriesBar } from "@/components/stories-bar";
+import { SuggestedFriends } from "@/components/suggested-friends";
+
 import { useCurrentUser, useCurrentProfile } from "@/hooks/use-current-user";
 import { AvatarImage } from "@/components/avatar-image";
 
@@ -59,8 +61,15 @@ function FeedPage() {
       )}
 
       <div>
-        {posts?.map((p) => <PostCard key={p.id} post={p} />)}
+        {posts?.map((p, i) => (
+          <div key={p.id}>
+            <PostCard post={p} />
+            {i === 2 && <SuggestedFriends />}
+          </div>
+        ))}
+        {!isLoading && (posts?.length ?? 0) <= 2 && <SuggestedFriends />}
       </div>
+
     </div>
   );
 }

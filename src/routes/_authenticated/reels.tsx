@@ -1,12 +1,15 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser, useCurrentProfile } from "@/hooks/use-current-user";
 import { PostMedia } from "@/components/post-media";
 import { AvatarImage } from "@/components/avatar-image";
-import { Heart, MessageCircle, Share2, Bookmark, MoreHorizontal, Music2 } from "lucide-react";
+import { CommentsPanel } from "@/components/comments-panel";
+import { Heart, MessageCircle, Share2, Bookmark, MoreHorizontal, Music2, X } from "lucide-react";
 import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
+
 
 export const Route = createFileRoute("/_authenticated/reels")({
   component: ReelsPage,
@@ -78,6 +81,8 @@ function ReelItem({ reel }: { reel: Reel }) {
   const media = [...reel.media].sort((a, b) => a.position - b.position)[0];
   const isMobile = useIsMobile();
   const isOwn = user?.id === reel.user_id;
+  const [commentsOpen, setCommentsOpen] = useState(false);
+
 
   const { data: likeState } = useQuery({
     queryKey: ["reel-likes", reel.id, user?.id],
@@ -178,33 +183,29 @@ function ReelItem({ reel }: { reel: Reel }) {
           className="h-full w-full"
         />
 
-        {/* Right action rail — YouTube Shorts style */}
+        {/* Right action rail — compact, bottom → centre */}
         <div
-          className="absolute right-2 z-20 flex flex-col items-center gap-6 text-white"
-          style={{ bottom: "calc(7.5rem + env(safe-area-inset-bottom))" }}
+          className="absolute right-2 z-20 flex flex-col items-center gap-4 text-white"
+          style={{ bottom: "calc(7rem + env(safe-area-inset-bottom))" }}
         >
           <RailButton
             label={compact(likeState?.count ?? 0)}
             onClick={() => (user ? toggleLike.mutate() : toast.info("Sign in to react"))}
             ariaLabel="Like reel"
           >
-            <Heart className={`h-7 w-7 ${likeState?.liked ? "fill-rose-500 text-rose-500" : ""}`} strokeWidth={1.8} />
+            <Heart className={`h-6 w-6 ${likeState?.liked ? "fill-rose-500 text-rose-500" : ""}`} strokeWidth={1.8} />
           </RailButton>
 
-          <Link
-            to="/p/$postId"
-            params={{ postId: reel.id }}
-            className="flex flex-col items-center gap-1.5"
-            aria-label="Comment on reel"
+          <RailButton
+            label={compact(commentCount)}
+            onClick={() => setCommentsOpen((o) => !o)}
+            ariaLabel="Comment on reel"
           >
-            <span className="grid h-11 w-11 place-items-center rounded-full bg-white/10 backdrop-blur-md">
-              <MessageCircle className="h-7 w-7" strokeWidth={1.8} />
-            </span>
-            <span className="text-[11px] font-semibold">{compact(commentCount)}</span>
-          </Link>
+            <MessageCircle className="h-6 w-6" strokeWidth={1.8} />
+          </RailButton>
 
           <RailButton label="Share" onClick={share} ariaLabel="Share reel">
-            <Share2 className="h-6 w-6" strokeWidth={1.8} />
+            <Share2 className="h-5 w-5" strokeWidth={1.8} />
           </RailButton>
 
           <RailButton
@@ -219,13 +220,14 @@ function ReelItem({ reel }: { reel: Reel }) {
             }}
             ariaLabel="Save reel"
           >
-            <Bookmark className="h-6 w-6" strokeWidth={1.8} />
+            <Bookmark className="h-5 w-5" strokeWidth={1.8} />
           </RailButton>
 
           <RailButton label="" onClick={share} ariaLabel="More options">
-            <MoreHorizontal className="h-6 w-6" />
+            <MoreHorizontal className="h-5 w-5" />
           </RailButton>
         </div>
+
 
         {/* Bottom author block */}
         <div
@@ -260,9 +262,26 @@ function ReelItem({ reel }: { reel: Reel }) {
             </span>
           )}
         </div>
+
+        {/* Slide-up comments sheet — video keeps playing behind it */}
+        {commentsOpen && (
+          <div
+            className="absolute inset-x-0 bottom-0 z-30 flex h-[58%] animate-[slide-up_240ms_ease-out] flex-col rounded-t-2xl border-t border-border bg-background shadow-2xl"
+            style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+          >
+            <div className="flex items-center justify-between border-b border-border px-4 py-2.5">
+              <span className="text-sm font-semibold">Comments</span>
+              <button onClick={() => setCommentsOpen(false)} aria-label="Close comments" className="rounded-full p-1.5 hover:bg-secondary">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <CommentsPanel postId={reel.id} postOwnerId={reel.user_id} onNavigate={() => setCommentsOpen(false)} />
+          </div>
+        )}
       </div>
     </div>
   );
+
 }
 
 

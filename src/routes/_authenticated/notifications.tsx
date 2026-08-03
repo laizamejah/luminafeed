@@ -151,28 +151,46 @@ function NotificationsPage() {
           {notifs.map((n) => {
             const actor = n.actor;
             const isFriendReq = n.type === "friend_request" && actor && pendingSenderIds.has(actor.id);
+            const postId = typeof n.data?.post_id === "string" ? (n.data.post_id as string) : null;
+            const verb =
+              n.type === "friend_request" ? "sent you a friend request"
+              : n.type === "friend_accepted" ? "accepted your friend request"
+              : n.type === "like" ? "reacted to your post"
+              : n.type === "dislike" ? "reacted to your post"
+              : n.type === "comment" ? `commented: ${typeof n.data?.text === "string" ? n.data.text : ""}`
+              : n.type === "new_post" ? "shared a new post"
+              : n.type === "new_story" ? "posted a new story"
+              : n.type;
+
+            const body = (
+              <>
+                <div className="text-sm">
+                  {actor && <span className="font-medium">@{actor.username}</span>}{" "}
+                  <span className={n.read_at ? "text-muted-foreground" : ""}>{verb}</span>
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  {formatDistanceToNow(new Date(n.created_at), { addSuffix: true })}
+                </div>
+              </>
+            );
+
             return (
-              <li key={n.id} className="flex items-center gap-3 p-3">
+              <li key={n.id} className={`flex items-center gap-3 p-3 ${n.read_at ? "" : "bg-secondary/40"}`}>
                 {actor && (
                   <Link to="/u/$username" params={{ username: actor.username }}>
                     <AvatarImage path={actor.avatar_url} name={actor.display_name ?? actor.username} size={40} />
                   </Link>
                 )}
                 <div className="flex-1 min-w-0">
-                  <div className="text-sm">
-                    {actor && (
-                      <Link to="/u/$username" params={{ username: actor.username }} className="font-medium hover:underline">
-                        @{actor.username}
-                      </Link>
-                    )}{" "}
-                    {n.type === "friend_request" && "sent you a friend request"}
-                    {n.type === "friend_accepted" && "accepted your friend request"}
-                    {!["friend_request", "friend_accepted"].includes(n.type) && n.type}
-                  </div>
-                  <div className="text-xs text-muted-foreground">
-                    {formatDistanceToNow(new Date(n.created_at), { addSuffix: true })}
-                  </div>
+                  {postId ? (
+                    <Link to="/p/$postId" params={{ postId }} className="block hover:underline">{body}</Link>
+                  ) : actor && !isFriendReq ? (
+                    <Link to="/u/$username" params={{ username: actor.username }} className="block hover:underline">{body}</Link>
+                  ) : (
+                    body
+                  )}
                 </div>
+
                 {isFriendReq && actor && (
                   <div className="flex gap-2">
                     <Button size="sm" onClick={() => respond.mutate({ senderId: actor.id, accept: true })} disabled={respond.isPending}>

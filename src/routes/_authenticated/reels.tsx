@@ -1,12 +1,15 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser, useCurrentProfile } from "@/hooks/use-current-user";
 import { PostMedia } from "@/components/post-media";
 import { AvatarImage } from "@/components/avatar-image";
-import { Heart, MessageCircle, Share2, Bookmark, MoreHorizontal, Music2 } from "lucide-react";
+import { CommentsPanel } from "@/components/comments-panel";
+import { Heart, MessageCircle, Share2, Bookmark, MoreHorizontal, Music2, X } from "lucide-react";
 import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
+
 
 export const Route = createFileRoute("/_authenticated/reels")({
   component: ReelsPage,
@@ -78,6 +81,8 @@ function ReelItem({ reel }: { reel: Reel }) {
   const media = [...reel.media].sort((a, b) => a.position - b.position)[0];
   const isMobile = useIsMobile();
   const isOwn = user?.id === reel.user_id;
+  const [commentsOpen, setCommentsOpen] = useState(false);
+
 
   const { data: likeState } = useQuery({
     queryKey: ["reel-likes", reel.id, user?.id],
@@ -257,9 +262,26 @@ function ReelItem({ reel }: { reel: Reel }) {
             </span>
           )}
         </div>
+
+        {/* Slide-up comments sheet — video keeps playing behind it */}
+        {commentsOpen && (
+          <div
+            className="absolute inset-x-0 bottom-0 z-30 flex h-[58%] animate-[slide-up_240ms_ease-out] flex-col rounded-t-2xl border-t border-border bg-background shadow-2xl"
+            style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+          >
+            <div className="flex items-center justify-between border-b border-border px-4 py-2.5">
+              <span className="text-sm font-semibold">Comments</span>
+              <button onClick={() => setCommentsOpen(false)} aria-label="Close comments" className="rounded-full p-1.5 hover:bg-secondary">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <CommentsPanel postId={reel.id} postOwnerId={reel.user_id} onNavigate={() => setCommentsOpen(false)} />
+          </div>
+        )}
       </div>
     </div>
   );
+
 }
 
 

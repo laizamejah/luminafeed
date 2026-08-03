@@ -178,33 +178,29 @@ function ReelItem({ reel }: { reel: Reel }) {
           className="h-full w-full"
         />
 
-        {/* Right action rail — YouTube Shorts style */}
+        {/* Right action rail — compact, bottom → centre */}
         <div
-          className="absolute right-2 z-20 flex flex-col items-center gap-6 text-white"
-          style={{ bottom: "calc(7.5rem + env(safe-area-inset-bottom))" }}
+          className="absolute right-2 z-20 flex flex-col items-center gap-4 text-white"
+          style={{ bottom: "calc(7rem + env(safe-area-inset-bottom))" }}
         >
           <RailButton
             label={compact(likeState?.count ?? 0)}
             onClick={() => (user ? toggleLike.mutate() : toast.info("Sign in to react"))}
             ariaLabel="Like reel"
           >
-            <Heart className={`h-7 w-7 ${likeState?.liked ? "fill-rose-500 text-rose-500" : ""}`} strokeWidth={1.8} />
+            <Heart className={`h-6 w-6 ${likeState?.liked ? "fill-rose-500 text-rose-500" : ""}`} strokeWidth={1.8} />
           </RailButton>
 
-          <Link
-            to="/p/$postId"
-            params={{ postId: reel.id }}
-            className="flex flex-col items-center gap-1.5"
-            aria-label="Comment on reel"
+          <RailButton
+            label={compact(commentCount)}
+            onClick={() => setCommentsOpen((o) => !o)}
+            ariaLabel="Comment on reel"
           >
-            <span className="grid h-11 w-11 place-items-center rounded-full bg-white/10 backdrop-blur-md">
-              <MessageCircle className="h-7 w-7" strokeWidth={1.8} />
-            </span>
-            <span className="text-[11px] font-semibold">{compact(commentCount)}</span>
-          </Link>
+            <MessageCircle className="h-6 w-6" strokeWidth={1.8} />
+          </RailButton>
 
           <RailButton label="Share" onClick={share} ariaLabel="Share reel">
-            <Share2 className="h-6 w-6" strokeWidth={1.8} />
+            <Share2 className="h-5 w-5" strokeWidth={1.8} />
           </RailButton>
 
           <RailButton
@@ -219,13 +215,14 @@ function ReelItem({ reel }: { reel: Reel }) {
             }}
             ariaLabel="Save reel"
           >
-            <Bookmark className="h-6 w-6" strokeWidth={1.8} />
+            <Bookmark className="h-5 w-5" strokeWidth={1.8} />
           </RailButton>
 
           <RailButton label="" onClick={share} ariaLabel="More options">
-            <MoreHorizontal className="h-6 w-6" />
+            <MoreHorizontal className="h-5 w-5" />
           </RailButton>
         </div>
+
 
         {/* Bottom author block */}
         <div

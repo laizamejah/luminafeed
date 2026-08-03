@@ -8,8 +8,8 @@ import { AvatarImage } from "./avatar-image";
 import { PostMedia } from "./post-media";
 import { formatDistanceToNow } from "date-fns";
 import { toast } from "sonner";
-import { Textarea } from "./ui/textarea";
-import { Button } from "./ui/button";
+import { CommentsPanel } from "./comments-panel";
+
 
 export interface FeedPost {
   id: string;

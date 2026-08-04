@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Heart, MessageCircle, Send, MapPin, ThumbsDown, Share2, Music, Play, Pause, X } from "lucide-react";
+import { Heart, MessageCircle, Send, MapPin, ThumbsDown, Share2, Music, Play, Pause, X, Aperture } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -9,6 +9,8 @@ import { PostMedia } from "./post-media";
 import { formatDistanceToNow } from "date-fns";
 import { toast } from "sonner";
 import { CommentsPanel } from "./comments-panel";
+import { TipButton } from "./tip-dialog";
+import type { ExifSummary } from "@/lib/exif";
 
 
 export interface FeedPost {
@@ -26,7 +28,7 @@ export interface FeedPost {
   audio_artist: string | null;
   audio_artwork_url: string | null;
   author: { id: string; username: string; display_name: string | null; avatar_url: string | null; show_metrics_publicly: boolean };
-  media: { id: string; storage_path: string; media_type: "image" | "video"; width: number | null; height: number | null; thumbnail_path: string | null; position: number }[];
+  media: { id: string; storage_path: string; media_type: "image" | "video"; width: number | null; height: number | null; thumbnail_path: string | null; position: number; exif?: ExifSummary | null }[];
 }
 
 export function PostCard({ post }: { post: FeedPost }) {
@@ -35,9 +37,12 @@ export function PostCard({ post }: { post: FeedPost }) {
   const { data: me } = useCurrentProfile();
   const [idx, setIdx] = useState(0);
   const [viewerOpen, setViewerOpen] = useState(false);
+  const [exifOpen, setExifOpen] = useState(false);
   const media = [...post.media].sort((a, b) => a.position - b.position);
   const isOwnPost = user?.id === post.user_id;
-  const showMetrics = post.author.show_metrics_publicly || isOwnPost;
+  const hideCounts = me?.hide_public_counts ?? false;
+  const showMetrics = (post.author.show_metrics_publicly || isOwnPost) && !hideCounts;
+  const exif = media[idx]?.exif ?? null;
 
   // Music player — auto-play muted then unmute on first interaction; auto-play when card visible
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -246,8 +251,40 @@ export function PostCard({ post }: { post: FeedPost }) {
         </div>
       )}
 
+      {/* EXIF / camera metadata */}
+      {exif && (
+        <div className="mx-3 mt-3 sm:mx-4">
+          <button
+            onClick={() => setExifOpen((v) => !v)}
+            className="inline-flex items-center gap-1.5 rounded-full border border-border/70 px-3 py-1 text-xs text-muted-foreground hover:text-foreground"
+          >
+            <Aperture className="h-3 w-3" /> {exifOpen ? "Hide" : "Photo details"}
+          </button>
+          {exifOpen && (
+            <dl className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 rounded-xl border border-border/70 bg-secondary/40 px-3 py-2 text-xs sm:grid-cols-3">
+              {([
+                ["Camera", exif.camera],
+                ["Lens", exif.lens],
+                ["ISO", exif.iso ? `ISO ${exif.iso}` : null],
+                ["Shutter", exif.shutter],
+                ["Aperture", exif.aperture],
+                ["Focal length", exif.focal],
+                ["Taken", exif.taken ? new Date(exif.taken).toLocaleString() : null],
+              ] as [string, string | null | undefined][])
+                .filter(([, v]) => !!v)
+                .map(([k, v]) => (
+                  <div key={k} className="min-w-0">
+                    <dt className="text-muted-foreground">{k}</dt>
+                    <dd className="truncate font-medium">{v}</dd>
+                  </div>
+                ))}
+            </dl>
+          )}
+        </div>
+      )}
+
       {/* Actions */}
-      <div className="mt-1 grid grid-cols-4 items-center border-t border-border/60 px-1 py-1 text-muted-foreground">
+      <div className="mt-1 grid grid-cols-5 items-center border-t border-border/60 px-1 py-1 text-muted-foreground">
         <button
           onClick={() => user ? toggleLike.mutate() : toast.info("Sign in to react")}
           className="flex items-center justify-center gap-2 rounded-lg py-2 text-sm transition-colors hover:bg-secondary/60 hover:text-foreground"
@@ -282,6 +319,8 @@ export function PostCard({ post }: { post: FeedPost }) {
         <button onClick={share} className="flex items-center justify-center gap-2 rounded-lg py-2 text-sm transition-colors hover:bg-secondary/60 hover:text-foreground" aria-label="Share">
           <Share2 className="h-5 w-5" />
         </button>
+
+        <TipButton recipientId={post.user_id} recipientName={post.author.display_name ?? post.author.username} postId={post.id} />
       </div>
 
 

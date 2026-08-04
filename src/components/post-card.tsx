@@ -28,7 +28,7 @@ export interface FeedPost {
   audio_artist: string | null;
   audio_artwork_url: string | null;
   author: { id: string; username: string; display_name: string | null; avatar_url: string | null; show_metrics_publicly: boolean };
-  media: { id: string; storage_path: string; media_type: "image" | "video"; width: number | null; height: number | null; thumbnail_path: string | null; position: number }[];
+  media: { id: string; storage_path: string; media_type: "image" | "video"; width: number | null; height: number | null; thumbnail_path: string | null; position: number; exif?: ExifSummary | null }[];
 }
 
 export function PostCard({ post }: { post: FeedPost }) {
@@ -37,9 +37,12 @@ export function PostCard({ post }: { post: FeedPost }) {
   const { data: me } = useCurrentProfile();
   const [idx, setIdx] = useState(0);
   const [viewerOpen, setViewerOpen] = useState(false);
+  const [exifOpen, setExifOpen] = useState(false);
   const media = [...post.media].sort((a, b) => a.position - b.position);
   const isOwnPost = user?.id === post.user_id;
-  const showMetrics = post.author.show_metrics_publicly || isOwnPost;
+  const hideCounts = me?.hide_public_counts ?? false;
+  const showMetrics = (post.author.show_metrics_publicly || isOwnPost) && !hideCounts;
+  const exif = media[idx]?.exif ?? null;
 
   // Music player — auto-play muted then unmute on first interaction; auto-play when card visible
   const audioRef = useRef<HTMLAudioElement | null>(null);

@@ -263,14 +263,13 @@ export function PostCard({ post }: { post: FeedPost }) {
           {exifOpen && (
             <dl className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 rounded-xl border border-border/70 bg-secondary/40 px-3 py-2 text-xs sm:grid-cols-3">
               {([
-                ["Camera", [exif.make, exif.model].filter(Boolean).join(" ")],
+                ["Camera", exif.camera],
                 ["Lens", exif.lens],
                 ["ISO", exif.iso ? `ISO ${exif.iso}` : null],
                 ["Shutter", exif.shutter],
-                ["Aperture", exif.aperture ? `ƒ/${exif.aperture}` : null],
-                ["Focal length", exif.focalLength ? `${exif.focalLength}mm` : null],
-                ["Dimensions", exif.width && exif.height ? `${exif.width} × ${exif.height}` : null],
-                ["Taken", exif.takenAt ? new Date(exif.takenAt).toLocaleString() : null],
+                ["Aperture", exif.aperture],
+                ["Focal length", exif.focal],
+                ["Taken", exif.taken ? new Date(exif.taken).toLocaleString() : null],
               ] as [string, string | null | undefined][])
                 .filter(([, v]) => !!v)
                 .map(([k, v]) => (

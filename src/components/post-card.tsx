@@ -319,6 +319,8 @@ export function PostCard({ post }: { post: FeedPost }) {
         <button onClick={share} className="flex items-center justify-center gap-2 rounded-lg py-2 text-sm transition-colors hover:bg-secondary/60 hover:text-foreground" aria-label="Share">
           <Share2 className="h-5 w-5" />
         </button>
+
+        <TipButton recipientId={post.user_id} recipientName={post.author.display_name ?? post.author.username} postId={post.id} />
       </div>
 
 

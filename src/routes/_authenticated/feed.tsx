@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { fetchFeed } from "@/lib/feed";
+import { useState } from "react";
+import { fetchFeed, type FeedScope } from "@/lib/feed";
 import { PostCard } from "@/components/post-card";
 import { PostComposer } from "@/components/post-composer";
 import { StoriesBar } from "@/components/stories-bar";
@@ -13,23 +14,50 @@ export const Route = createFileRoute("/_authenticated/feed")({
   component: FeedPage,
 });
 
+const SCOPES: { id: FeedScope; label: string }[] = [
+  { id: "all", label: "All" },
+  { id: "following", label: "Following" },
+  { id: "close_friends", label: "Close friends" },
+];
+
 function FeedPage() {
   const { data: user } = useCurrentUser();
   const { data: me } = useCurrentProfile();
   const hideReels = me?.hide_reels ?? false;
   const kidOnly = me?.is_kid ?? false;
+  const [scope, setScope] = useState<FeedScope>("all");
+  const compact = me?.feed_layout === "compact";
 
   const { data: posts, isLoading } = useQuery({
-    queryKey: ["feed", user?.id ?? null, hideReels, kidOnly],
-    queryFn: () => fetchFeed(user?.id ?? null, hideReels, kidOnly),
+    queryKey: ["feed", user?.id ?? null, hideReels, kidOnly, scope],
+    queryFn: () => fetchFeed(user?.id ?? null, hideReels, kidOnly, scope),
   });
 
   return (
-    <div className="mx-auto max-w-2xl">
+    <div className={compact ? "mx-auto max-w-xl" : "mx-auto max-w-2xl"}>
       <div className="sticky top-0 md:top-0 z-10 bg-background/85 backdrop-blur border-b border-border">
         <div className="hidden md:flex items-baseline justify-between px-4 py-6">
           <h1 className="font-serif text-3xl">Feed</h1>
           <span className="text-xs text-muted-foreground">Chronological · no algorithm</span>
+        </div>
+        <div className="scrollbar-none flex gap-2 overflow-x-auto px-3 py-2">
+          {SCOPES.map((s) => (
+            <button
+              key={s.id}
+              onClick={() => setScope(s.id)}
+              className={`shrink-0 rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
+                scope === s.id ? "bg-foreground text-background" : "border border-border text-muted-foreground hover:bg-secondary/60"
+              }`}
+            >
+              {s.label}
+            </button>
+          ))}
+          <Link
+            to="/albums"
+            className="shrink-0 rounded-full border border-border px-4 py-1.5 text-sm font-medium text-muted-foreground hover:bg-secondary/60"
+          >
+            Custom lists
+          </Link>
         </div>
       </div>
 

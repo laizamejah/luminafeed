@@ -34,6 +34,7 @@ import { Route as AuthenticatedNotificationsNewRouteImport } from './routes/_aut
 import { Route as AuthenticatedMessagesUserIdRouteImport } from './routes/_authenticated/messages.$userId'
 import { Route as AuthenticatedMarketNewRouteImport } from './routes/_authenticated/market.new'
 import { Route as AuthenticatedMarketListingIdRouteImport } from './routes/_authenticated/market.$listingId'
+import { Route as AuthenticatedAlbumsAlbumIdRouteImport } from './routes/_authenticated/albums.$albumId'
 
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
@@ -165,6 +166,12 @@ const AuthenticatedMarketListingIdRoute =
     path: '/$listingId',
     getParentRoute: () => AuthenticatedMarketRoute,
   } as any)
+const AuthenticatedAlbumsAlbumIdRoute =
+  AuthenticatedAlbumsAlbumIdRouteImport.update({
+    id: '/albums/$albumId',
+    path: '/albums/$albumId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -185,6 +192,7 @@ export interface FileRoutesByFullPath {
   '/settings': typeof AuthenticatedSettingsRoute
   '/p/$postId': typeof PPostIdRoute
   '/u/$username': typeof UUsernameRoute
+  '/albums/$albumId': typeof AuthenticatedAlbumsAlbumIdRoute
   '/market/$listingId': typeof AuthenticatedMarketListingIdRoute
   '/market/new': typeof AuthenticatedMarketNewRoute
   '/messages/$userId': typeof AuthenticatedMessagesUserIdRoute
@@ -210,6 +218,7 @@ export interface FileRoutesByTo {
   '/settings': typeof AuthenticatedSettingsRoute
   '/p/$postId': typeof PPostIdRoute
   '/u/$username': typeof UUsernameRoute
+  '/albums/$albumId': typeof AuthenticatedAlbumsAlbumIdRoute
   '/market/$listingId': typeof AuthenticatedMarketListingIdRoute
   '/market/new': typeof AuthenticatedMarketNewRoute
   '/messages/$userId': typeof AuthenticatedMessagesUserIdRoute
@@ -238,6 +247,7 @@ export interface FileRoutesById {
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/p/$postId': typeof PPostIdRoute
   '/u/$username': typeof UUsernameRoute
+  '/_authenticated/albums/$albumId': typeof AuthenticatedAlbumsAlbumIdRoute
   '/_authenticated/market/$listingId': typeof AuthenticatedMarketListingIdRoute
   '/_authenticated/market/new': typeof AuthenticatedMarketNewRoute
   '/_authenticated/messages/$userId': typeof AuthenticatedMessagesUserIdRoute
@@ -266,6 +276,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/p/$postId'
     | '/u/$username'
+    | '/albums/$albumId'
     | '/market/$listingId'
     | '/market/new'
     | '/messages/$userId'
@@ -291,6 +302,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/p/$postId'
     | '/u/$username'
+    | '/albums/$albumId'
     | '/market/$listingId'
     | '/market/new'
     | '/messages/$userId'
@@ -318,6 +330,7 @@ export interface FileRouteTypes {
     | '/_authenticated/settings'
     | '/p/$postId'
     | '/u/$username'
+    | '/_authenticated/albums/$albumId'
     | '/_authenticated/market/$listingId'
     | '/_authenticated/market/new'
     | '/_authenticated/messages/$userId'
@@ -512,6 +525,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedMarketListingIdRouteImport
       parentRoute: typeof AuthenticatedMarketRoute
     }
+    '/_authenticated/albums/$albumId': {
+      id: '/_authenticated/albums/$albumId'
+      path: '/albums/$albumId'
+      fullPath: '/albums/$albumId'
+      preLoaderRoute: typeof AuthenticatedAlbumsAlbumIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
@@ -571,6 +591,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedReelsRoute: typeof AuthenticatedReelsRoute
   AuthenticatedSearchRoute: typeof AuthenticatedSearchRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
+  AuthenticatedAlbumsAlbumIdRoute: typeof AuthenticatedAlbumsAlbumIdRoute
   AuthenticatedAlbumsIndexRoute: typeof AuthenticatedAlbumsIndexRoute
 }
 
@@ -588,6 +609,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedReelsRoute: AuthenticatedReelsRoute,
   AuthenticatedSearchRoute: AuthenticatedSearchRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
+  AuthenticatedAlbumsAlbumIdRoute: AuthenticatedAlbumsAlbumIdRoute,
   AuthenticatedAlbumsIndexRoute: AuthenticatedAlbumsIndexRoute,
 }
 

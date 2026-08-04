@@ -251,8 +251,41 @@ export function PostCard({ post }: { post: FeedPost }) {
         </div>
       )}
 
+      {/* EXIF / camera metadata */}
+      {exif && (
+        <div className="mx-3 mt-3 sm:mx-4">
+          <button
+            onClick={() => setExifOpen((v) => !v)}
+            className="inline-flex items-center gap-1.5 rounded-full border border-border/70 px-3 py-1 text-xs text-muted-foreground hover:text-foreground"
+          >
+            <Aperture className="h-3 w-3" /> {exifOpen ? "Hide" : "Photo details"}
+          </button>
+          {exifOpen && (
+            <dl className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 rounded-xl border border-border/70 bg-secondary/40 px-3 py-2 text-xs sm:grid-cols-3">
+              {([
+                ["Camera", [exif.make, exif.model].filter(Boolean).join(" ")],
+                ["Lens", exif.lens],
+                ["ISO", exif.iso ? `ISO ${exif.iso}` : null],
+                ["Shutter", exif.shutter],
+                ["Aperture", exif.aperture ? `ƒ/${exif.aperture}` : null],
+                ["Focal length", exif.focalLength ? `${exif.focalLength}mm` : null],
+                ["Dimensions", exif.width && exif.height ? `${exif.width} × ${exif.height}` : null],
+                ["Taken", exif.takenAt ? new Date(exif.takenAt).toLocaleString() : null],
+              ] as [string, string | null | undefined][])
+                .filter(([, v]) => !!v)
+                .map(([k, v]) => (
+                  <div key={k} className="min-w-0">
+                    <dt className="text-muted-foreground">{k}</dt>
+                    <dd className="truncate font-medium">{v}</dd>
+                  </div>
+                ))}
+            </dl>
+          )}
+        </div>
+      )}
+
       {/* Actions */}
-      <div className="mt-1 grid grid-cols-4 items-center border-t border-border/60 px-1 py-1 text-muted-foreground">
+      <div className="mt-1 grid grid-cols-5 items-center border-t border-border/60 px-1 py-1 text-muted-foreground">
         <button
           onClick={() => user ? toggleLike.mutate() : toast.info("Sign in to react")}
           className="flex items-center justify-center gap-2 rounded-lg py-2 text-sm transition-colors hover:bg-secondary/60 hover:text-foreground"

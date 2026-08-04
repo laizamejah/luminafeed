@@ -14,6 +14,123 @@ export type Database = {
   }
   public: {
     Tables: {
+      album_members: {
+        Row: {
+          album_id: string
+          created_at: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          album_id: string
+          created_at?: string
+          role?: string
+          user_id: string
+        }
+        Update: {
+          album_id?: string
+          created_at?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "album_members_album_id_fkey"
+            columns: ["album_id"]
+            isOneToOne: false
+            referencedRelation: "albums"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "album_members_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      album_posts: {
+        Row: {
+          added_by: string
+          album_id: string
+          created_at: string
+          post_id: string
+        }
+        Insert: {
+          added_by: string
+          album_id: string
+          created_at?: string
+          post_id: string
+        }
+        Update: {
+          added_by?: string
+          album_id?: string
+          created_at?: string
+          post_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "album_posts_added_by_fkey"
+            columns: ["added_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "album_posts_album_id_fkey"
+            columns: ["album_id"]
+            isOneToOne: false
+            referencedRelation: "albums"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "album_posts_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      albums: {
+        Row: {
+          cover_path: string | null
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          owner_id: string
+          updated_at: string
+        }
+        Insert: {
+          cover_path?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          owner_id: string
+          updated_at?: string
+        }
+        Update: {
+          cover_path?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          owner_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "albums_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       blocked_users: {
         Row: {
           blocked_id: string
@@ -458,6 +575,7 @@ export type Database = {
       post_media: {
         Row: {
           created_at: string
+          exif: Json | null
           height: number | null
           id: string
           media_type: Database["public"]["Enums"]["media_type"]
@@ -470,6 +588,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          exif?: Json | null
           height?: number | null
           id?: string
           media_type?: Database["public"]["Enums"]["media_type"]
@@ -482,6 +601,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          exif?: Json | null
           height?: number | null
           id?: string
           media_type?: Database["public"]["Enums"]["media_type"]
@@ -570,11 +690,16 @@ export type Database = {
       }
       profiles: {
         Row: {
+          accent_color: string
           avatar_url: string | null
           bio: string | null
           birth_year: number | null
+          cover_position: number
+          cover_url: string | null
           created_at: string
           display_name: string | null
+          feed_layout: string
+          hide_public_counts: boolean
           hide_reels: boolean
           id: string
           is_kid: boolean
@@ -588,11 +713,16 @@ export type Database = {
           username: string
         }
         Insert: {
+          accent_color?: string
           avatar_url?: string | null
           bio?: string | null
           birth_year?: number | null
+          cover_position?: number
+          cover_url?: string | null
           created_at?: string
           display_name?: string | null
+          feed_layout?: string
+          hide_public_counts?: boolean
           hide_reels?: boolean
           id: string
           is_kid?: boolean
@@ -606,11 +736,16 @@ export type Database = {
           username: string
         }
         Update: {
+          accent_color?: string
           avatar_url?: string | null
           bio?: string | null
           birth_year?: number | null
+          cover_position?: number
+          cover_url?: string | null
           created_at?: string
           display_name?: string | null
+          feed_layout?: string
+          hide_public_counts?: boolean
           hide_reels?: boolean
           id?: string
           is_kid?: boolean
@@ -739,6 +874,64 @@ export type Database = {
           },
         ]
       }
+      tips: {
+        Row: {
+          amount_cents: number
+          created_at: string
+          currency: string
+          id: string
+          note: string | null
+          post_id: string | null
+          recipient_id: string
+          sender_id: string
+          status: string
+        }
+        Insert: {
+          amount_cents: number
+          created_at?: string
+          currency?: string
+          id?: string
+          note?: string | null
+          post_id?: string | null
+          recipient_id: string
+          sender_id: string
+          status?: string
+        }
+        Update: {
+          amount_cents?: number
+          created_at?: string
+          currency?: string
+          id?: string
+          note?: string | null
+          post_id?: string | null
+          recipient_id?: string
+          sender_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tips_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tips_recipient_id_fkey"
+            columns: ["recipient_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tips_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -770,6 +963,14 @@ export type Database = {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
+        Returns: boolean
+      }
+      is_album_member: {
+        Args: { _album_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_album_owner: {
+        Args: { _album_id: string; _user_id: string }
         Returns: boolean
       }
     }

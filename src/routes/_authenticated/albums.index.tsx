@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { toast } from "sonner";
 import { Users, Plus, CalendarDays } from "lucide-react";
 
-export const Route = createFileRoute("/_authenticated/albums")({
+export const Route = createFileRoute("/_authenticated/albums/")({
   ssr: false,
   component: AlbumsPage,
   errorComponent: ({ error }) => <div role="alert" className="p-8 text-sm">{error.message}</div>,

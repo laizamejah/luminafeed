@@ -27,6 +27,7 @@ import { Route as AuthenticatedKidsRouteImport } from './routes/_authenticated/k
 import { Route as AuthenticatedFeedRouteImport } from './routes/_authenticated/feed'
 import { Route as AuthenticatedDiscoverRouteImport } from './routes/_authenticated/discover'
 import { Route as AuthenticatedCreateRouteImport } from './routes/_authenticated/create'
+import { Route as AuthenticatedAlbumsRouteImport } from './routes/_authenticated/albums'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedMessagesIndexRouteImport } from './routes/_authenticated/messages.index'
 import { Route as AuthenticatedNotificationsNewRouteImport } from './routes/_authenticated/notifications.new'
@@ -124,6 +125,11 @@ const AuthenticatedCreateRoute = AuthenticatedCreateRouteImport.update({
   path: '/create',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedAlbumsRoute = AuthenticatedAlbumsRouteImport.update({
+  id: '/albums',
+  path: '/albums',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
   id: '/admin',
   path: '/admin',
@@ -164,6 +170,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
   '/admin': typeof AuthenticatedAdminRoute
+  '/albums': typeof AuthenticatedAlbumsRoute
   '/create': typeof AuthenticatedCreateRoute
   '/discover': typeof AuthenticatedDiscoverRoute
   '/feed': typeof AuthenticatedFeedRoute
@@ -189,6 +196,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
   '/admin': typeof AuthenticatedAdminRoute
+  '/albums': typeof AuthenticatedAlbumsRoute
   '/create': typeof AuthenticatedCreateRoute
   '/discover': typeof AuthenticatedDiscoverRoute
   '/feed': typeof AuthenticatedFeedRoute
@@ -215,6 +223,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
+  '/_authenticated/albums': typeof AuthenticatedAlbumsRoute
   '/_authenticated/create': typeof AuthenticatedCreateRoute
   '/_authenticated/discover': typeof AuthenticatedDiscoverRoute
   '/_authenticated/feed': typeof AuthenticatedFeedRoute
@@ -242,6 +251,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/reset-password'
     | '/admin'
+    | '/albums'
     | '/create'
     | '/discover'
     | '/feed'
@@ -267,6 +277,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/reset-password'
     | '/admin'
+    | '/albums'
     | '/create'
     | '/discover'
     | '/feed'
@@ -292,6 +303,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/reset-password'
     | '/_authenticated/admin'
+    | '/_authenticated/albums'
     | '/_authenticated/create'
     | '/_authenticated/discover'
     | '/_authenticated/feed'
@@ -450,6 +462,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCreateRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/albums': {
+      id: '/_authenticated/albums'
+      path: '/albums'
+      fullPath: '/albums'
+      preLoaderRoute: typeof AuthenticatedAlbumsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/admin': {
       id: '/_authenticated/admin'
       path: '/admin'
@@ -539,6 +558,7 @@ const AuthenticatedNotificationsRouteWithChildren =
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
+  AuthenticatedAlbumsRoute: typeof AuthenticatedAlbumsRoute
   AuthenticatedCreateRoute: typeof AuthenticatedCreateRoute
   AuthenticatedDiscoverRoute: typeof AuthenticatedDiscoverRoute
   AuthenticatedFeedRoute: typeof AuthenticatedFeedRoute
@@ -555,6 +575,7 @@ interface AuthenticatedRouteRouteChildren {
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminRoute: AuthenticatedAdminRoute,
+  AuthenticatedAlbumsRoute: AuthenticatedAlbumsRoute,
   AuthenticatedCreateRoute: AuthenticatedCreateRoute,
   AuthenticatedDiscoverRoute: AuthenticatedDiscoverRoute,
   AuthenticatedFeedRoute: AuthenticatedFeedRoute,

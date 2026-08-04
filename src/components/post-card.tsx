@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Heart, MessageCircle, Send, MapPin, ThumbsDown, Share2, Music, Play, Pause, X } from "lucide-react";
+import { Heart, MessageCircle, Send, MapPin, ThumbsDown, Share2, Music, Play, Pause, X, Aperture } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -9,6 +9,8 @@ import { PostMedia } from "./post-media";
 import { formatDistanceToNow } from "date-fns";
 import { toast } from "sonner";
 import { CommentsPanel } from "./comments-panel";
+import { TipButton } from "./tip-dialog";
+import type { ExifSummary } from "@/lib/exif";
 
 
 export interface FeedPost {

@@ -391,12 +391,16 @@ export type Database = {
         Row: {
           category: string | null
           condition: string
+          contact_email: string | null
+          contact_phone: string | null
           cover_path: string | null
           created_at: string
           currency: string
           description: string | null
           id: string
+          latitude: number | null
           location_name: string | null
+          longitude: number | null
           price_cents: number
           seller_id: string
           status: string
@@ -406,12 +410,16 @@ export type Database = {
         Insert: {
           category?: string | null
           condition?: string
+          contact_email?: string | null
+          contact_phone?: string | null
           cover_path?: string | null
           created_at?: string
           currency?: string
           description?: string | null
           id?: string
+          latitude?: number | null
           location_name?: string | null
+          longitude?: number | null
           price_cents: number
           seller_id: string
           status?: string
@@ -421,12 +429,16 @@ export type Database = {
         Update: {
           category?: string | null
           condition?: string
+          contact_email?: string | null
+          contact_phone?: string | null
           cover_path?: string | null
           created_at?: string
           currency?: string
           description?: string | null
           id?: string
+          latitude?: number | null
           location_name?: string | null
+          longitude?: number | null
           price_cents?: number
           seller_id?: string
           status?: string
@@ -527,6 +539,76 @@ export type Database = {
           {
             foreignKeyName: "notifications_user_id_fkey"
             columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      orders: {
+        Row: {
+          amount_cents: number
+          buyer_id: string
+          created_at: string
+          currency: string
+          id: string
+          listing_id: string
+          platform_fee_cents: number
+          provider: string
+          provider_ref: string | null
+          seller_id: string
+          seller_net_cents: number
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          amount_cents: number
+          buyer_id: string
+          created_at?: string
+          currency?: string
+          id?: string
+          listing_id: string
+          platform_fee_cents?: number
+          provider?: string
+          provider_ref?: string | null
+          seller_id: string
+          seller_net_cents?: number
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          amount_cents?: number
+          buyer_id?: string
+          created_at?: string
+          currency?: string
+          id?: string
+          listing_id?: string
+          platform_fee_cents?: number
+          provider?: string
+          provider_ref?: string | null
+          seller_id?: string
+          seller_net_cents?: number
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orders_buyer_id_fkey"
+            columns: ["buyer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "listings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_seller_id_fkey"
+            columns: ["seller_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -1032,6 +1114,59 @@ export type Database = {
           },
         ]
       }
+      verified_sellers: {
+        Row: {
+          approved_at: string | null
+          business_name: string
+          city: string | null
+          contact_email: string | null
+          contact_phone: string | null
+          created_at: string
+          mpesa_number: string | null
+          payout_method: string
+          status: string
+          stripe_account_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          approved_at?: string | null
+          business_name: string
+          city?: string | null
+          contact_email?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          mpesa_number?: string | null
+          payout_method?: string
+          status?: string
+          stripe_account_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          approved_at?: string | null
+          business_name?: string
+          city?: string | null
+          contact_email?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          mpesa_number?: string | null
+          payout_method?: string
+          status?: string
+          stripe_account_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "verified_sellers_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -1052,6 +1187,7 @@ export type Database = {
         Args: { _album_id: string; _user_id: string }
         Returns: boolean
       }
+      is_verified_seller: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"

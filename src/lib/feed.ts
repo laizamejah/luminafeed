@@ -70,3 +70,15 @@ export async function fetchAlbumFeed(albumId: string): Promise<FeedPost[]> {
     .map((r) => r.post)
     .filter((p): p is FeedPost => !!p);
 }
+
+/** Chronological posts authored by a single user, shaped for <PostCard />. */
+export async function fetchUserPosts(userId: string): Promise<FeedPost[]> {
+  const { data, error } = await supabase
+    .from("posts")
+    .select(SELECT)
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false })
+    .limit(60);
+  if (error) throw error;
+  return (data ?? []) as unknown as FeedPost[];
+}

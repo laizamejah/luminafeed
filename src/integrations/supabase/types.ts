@@ -694,69 +694,87 @@ export type Database = {
           avatar_url: string | null
           bio: string | null
           birth_year: number | null
+          category: string | null
           cover_position: number
           cover_url: string | null
           created_at: string
           display_name: string | null
+          education: string | null
           feed_layout: string
           hide_public_counts: boolean
           hide_reels: boolean
+          hometown: string | null
           id: string
           is_kid: boolean
+          location: string | null
           message_notifications: boolean
           parent_id: string | null
+          relationship_status: string | null
           show_metrics_publicly: boolean
           suspended: boolean
           suspended_at: string | null
           suspension_reason: string | null
           theme_preference: string
           username: string
+          verified: boolean
         }
         Insert: {
           accent_color?: string
           avatar_url?: string | null
           bio?: string | null
           birth_year?: number | null
+          category?: string | null
           cover_position?: number
           cover_url?: string | null
           created_at?: string
           display_name?: string | null
+          education?: string | null
           feed_layout?: string
           hide_public_counts?: boolean
           hide_reels?: boolean
+          hometown?: string | null
           id: string
           is_kid?: boolean
+          location?: string | null
           message_notifications?: boolean
           parent_id?: string | null
+          relationship_status?: string | null
           show_metrics_publicly?: boolean
           suspended?: boolean
           suspended_at?: string | null
           suspension_reason?: string | null
           theme_preference?: string
           username: string
+          verified?: boolean
         }
         Update: {
           accent_color?: string
           avatar_url?: string | null
           bio?: string | null
           birth_year?: number | null
+          category?: string | null
           cover_position?: number
           cover_url?: string | null
           created_at?: string
           display_name?: string | null
+          education?: string | null
           feed_layout?: string
           hide_public_counts?: boolean
           hide_reels?: boolean
+          hometown?: string | null
           id?: string
           is_kid?: boolean
+          location?: string | null
           message_notifications?: boolean
           parent_id?: string | null
+          relationship_status?: string | null
           show_metrics_publicly?: boolean
           suspended?: boolean
           suspended_at?: string | null
           suspension_reason?: string | null
           theme_preference?: string
           username?: string
+          verified?: boolean
         }
         Relationships: [
           {

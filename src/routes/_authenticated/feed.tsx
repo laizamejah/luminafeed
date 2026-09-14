@@ -24,7 +24,7 @@ function FeedPage() {
   const { data: user } = useCurrentUser();
   const { data: me } = useCurrentProfile();
   const hideReels = me?.hide_reels ?? false;
-  const kidOnly = me?.is_kid ?? false;
+  const { isKid: kidOnly } = useKidStatus();
   const [scope, setScope] = useState<FeedScope>("all");
   const compact = me?.feed_layout === "compact";
 

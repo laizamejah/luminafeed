@@ -163,7 +163,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             </Link>
           );
         })}
-        {me && !me.is_kid && (
+        {me && !isKid && (
           <Link
             to="/kids"
             className={cn(

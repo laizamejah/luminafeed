@@ -36,7 +36,7 @@ function ReelsPage() {
   const { data: me } = useCurrentProfile();
 
   const { data: reels, isLoading } = useQuery({
-    queryKey: ["reels", user?.id, me?.is_kid],
+    queryKey: ["reels", user?.id, isKid],
     enabled: !!user?.id,
     queryFn: async () => {
       let q = supabase
@@ -48,7 +48,7 @@ function ReelsPage() {
         .eq("post_media.media_type", "video")
         .order("created_at", { ascending: false })
         .limit(50);
-      if (me?.is_kid) q = q.eq("kid_safe", true);
+      if (isKid) q = q.eq("kid_safe", true);
       const { data, error } = await q;
       if (error) throw error;
       return (data ?? []) as unknown as Reel[];

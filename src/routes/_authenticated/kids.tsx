@@ -49,11 +49,14 @@ function KidsSetup() {
         // Wait for the auto-created profile trigger, then flag it as a kid account.
         await new Promise((r) => setTimeout(r, 400));
         await supabase.from("profiles").update({
+          display_name: displayName || null,
+        }).eq("id", childId);
+        await supabase.from("profile_safety").upsert({
+          id: childId,
           is_kid: true,
           birth_year: year,
           parent_id: user.id,
-          display_name: displayName || null,
-        }).eq("id", childId);
+        });
       }
 
       // Restore parent's session locally so the parent stays signed in.

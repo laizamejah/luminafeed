@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useCurrentProfile } from "@/hooks/use-current-user";
+import { useCurrentProfile, useKidStatus } from "@/hooks/use-current-user";
 import { useIsAdmin } from "@/hooks/use-admin";
 import { supabase } from "@/integrations/supabase/client";
 import { ThemeToggle } from "./theme-provider";
@@ -98,6 +98,7 @@ function Badge({ count }: { count: number }) {
 export function AppShell({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { data: me } = useCurrentProfile();
+  const { isKid } = useKidStatus();
   const { data: isAdmin } = useIsAdmin();
   const counts = useCounts();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);

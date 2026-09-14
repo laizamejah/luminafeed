@@ -2,6 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { PROFILE_SELECT } from "@/lib/profile-columns";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { useSignedUrl } from "@/hooks/use-signed-url";
 import { AvatarImage } from "@/components/avatar-image";
@@ -53,7 +54,7 @@ function Thread() {
   const { data: partner } = useQuery({
     queryKey: ["profile-by-id", userId],
     queryFn: async () => {
-      const { data } = await supabase.from("profiles").select("*").eq("id", userId).maybeSingle();
+      const { data } = await supabase.from("profiles").select(PROFILE_SELECT).eq("id", userId).maybeSingle();
       return data;
     },
   });

@@ -7,7 +7,7 @@ import { PostComposer } from "@/components/post-composer";
 import { StoriesBar } from "@/components/stories-bar";
 import { SuggestedFriends } from "@/components/suggested-friends";
 
-import { useCurrentUser, useCurrentProfile } from "@/hooks/use-current-user";
+import { useCurrentUser, useCurrentProfile, useKidStatus } from "@/hooks/use-current-user";
 import { AvatarImage } from "@/components/avatar-image";
 
 export const Route = createFileRoute("/_authenticated/feed")({
@@ -24,7 +24,7 @@ function FeedPage() {
   const { data: user } = useCurrentUser();
   const { data: me } = useCurrentProfile();
   const hideReels = me?.hide_reels ?? false;
-  const kidOnly = me?.is_kid ?? false;
+  const { isKid: kidOnly } = useKidStatus();
   const [scope, setScope] = useState<FeedScope>("all");
   const compact = me?.feed_layout === "compact";
 

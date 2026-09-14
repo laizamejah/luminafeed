@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useCurrentUser, useCurrentProfile } from "@/hooks/use-current-user";
+import { useCurrentUser, useCurrentProfile, useKidStatus } from "@/hooks/use-current-user";
 import { PostMedia } from "@/components/post-media";
 import { AvatarImage } from "@/components/avatar-image";
 import { CommentsPanel } from "@/components/comments-panel";
@@ -34,9 +34,10 @@ function compact(n: number) {
 function ReelsPage() {
   const { data: user } = useCurrentUser();
   const { data: me } = useCurrentProfile();
+  const { isKid } = useKidStatus();
 
   const { data: reels, isLoading } = useQuery({
-    queryKey: ["reels", user?.id, me?.is_kid],
+    queryKey: ["reels", user?.id, isKid],
     enabled: !!user?.id,
     queryFn: async () => {
       let q = supabase
@@ -48,7 +49,7 @@ function ReelsPage() {
         .eq("post_media.media_type", "video")
         .order("created_at", { ascending: false })
         .limit(50);
-      if (me?.is_kid) q = q.eq("kid_safe", true);
+      if (isKid) q = q.eq("kid_safe", true);
       const { data, error } = await q;
       if (error) throw error;
       return (data ?? []) as unknown as Reel[];

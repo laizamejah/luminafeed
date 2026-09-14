@@ -2,6 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { PROFILE_SELECT } from "@/lib/profile-columns";
 import { AvatarImage } from "@/components/avatar-image";
 import { PostMedia } from "@/components/post-media";
 import { PostCard } from "@/components/post-card";
@@ -48,7 +49,7 @@ function ProfilePage() {
   const { data: profile, isLoading } = useQuery({
     queryKey: ["profile", username],
     queryFn: async () => {
-      const { data, error } = await supabase.from("profiles").select("*").eq("username", username).maybeSingle();
+      const { data, error } = await supabase.from("profiles").select(PROFILE_SELECT).eq("username", username).maybeSingle();
       if (error) throw error;
       return data;
     },

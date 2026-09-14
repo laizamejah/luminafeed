@@ -30,7 +30,6 @@ interface AdminProfile {
   display_name: string | null;
   avatar_url: string | null;
   created_at: string;
-  is_kid: boolean;
   suspended: boolean | null;
   suspension_reason: string | null;
 }
@@ -46,7 +45,7 @@ function AdminPage() {
     queryFn: async () => {
       let query = supabase
         .from("profiles")
-        .select("id, username, display_name, avatar_url, created_at, is_kid, suspended, suspension_reason")
+        .select("id, username, display_name, avatar_url, created_at, suspended, suspension_reason")
         .order("created_at", { ascending: false })
         .limit(200);
       if (q.trim()) query = query.or(`username.ilike.%${q.trim()}%,display_name.ilike.%${q.trim()}%`);
@@ -130,8 +129,7 @@ function AdminPage() {
                 </Link>
                 <p className="truncate text-xs text-muted-foreground">
                   @{u.username} · joined {new Date(u.created_at).toLocaleDateString()}
-                  {u.is_kid ? " · kid account" : ""}
-                </p>
+                                  </p>
               </div>
             </div>
             <div className="flex shrink-0 items-center gap-2">

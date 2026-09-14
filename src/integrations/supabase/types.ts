@@ -770,6 +770,45 @@ export type Database = {
           },
         ]
       }
+      profile_safety: {
+        Row: {
+          birth_year: number | null
+          created_at: string
+          id: string
+          is_kid: boolean
+          parent_id: string | null
+        }
+        Insert: {
+          birth_year?: number | null
+          created_at?: string
+          id: string
+          is_kid?: boolean
+          parent_id?: string | null
+        }
+        Update: {
+          birth_year?: number | null
+          created_at?: string
+          id?: string
+          is_kid?: boolean
+          parent_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profile_safety_id_fkey"
+            columns: ["id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profile_safety_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           accent_color: string

@@ -57,6 +57,13 @@ function ReelsPage() {
     },
   });
 
+  const qcRoot = useQueryClient();
+  useEffect(() => {
+    if (!reels?.length) return;
+    const paths = reels.flatMap((r) => r.media.flatMap((m) => [m.storage_path, m.thumbnail_path]));
+    prefetchSignedUrls(qcRoot, "media", paths);
+  }, [reels, qcRoot]);
+
   if (isLoading) return <div className="p-8 text-sm text-muted-foreground">Loading reels…</div>;
   if (!reels?.length) return (
     <div className="p-12 text-center">

@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { prefetchSignedUrls } from "@/hooks/use-signed-url";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser, useCurrentProfile, useKidStatus } from "@/hooks/use-current-user";
 import { PostMedia } from "@/components/post-media";

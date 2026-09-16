@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
+import { prefetchSignedUrls, getSignedUrl, warmImage } from "@/hooks/use-signed-url";
 import { fetchFeed, type FeedScope } from "@/lib/feed";
 import { PostCard } from "@/components/post-card";
 import { PostComposer } from "@/components/post-composer";

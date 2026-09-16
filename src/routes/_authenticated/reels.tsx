@@ -194,15 +194,15 @@ function ReelItem({ reel }: { reel: Reel }) {
 
         {/* Right action rail — compact, bottom → centre */}
         <div
-          className="absolute right-2 z-20 flex flex-col items-center gap-4 text-white"
-          style={{ bottom: "calc(7rem + env(safe-area-inset-bottom))" }}
+          className="absolute right-2 z-20 flex flex-col items-center gap-3.5 text-white"
+          style={{ bottom: "calc(5.5rem + env(safe-area-inset-bottom))" }}
         >
           <RailButton
             label={compact(likeState?.count ?? 0)}
             onClick={() => (user ? toggleLike.mutate() : toast.info("Sign in to react"))}
             ariaLabel="Like reel"
           >
-            <Heart className={`h-6 w-6 ${likeState?.liked ? "fill-rose-500 text-rose-500" : ""}`} strokeWidth={1.8} />
+            <Heart className={`h-5 w-5 ${likeState?.liked ? "fill-rose-500 text-rose-500" : ""}`} strokeWidth={1.8} />
           </RailButton>
 
           <RailButton
@@ -210,11 +210,11 @@ function ReelItem({ reel }: { reel: Reel }) {
             onClick={() => setCommentsOpen((o) => !o)}
             ariaLabel="Comment on reel"
           >
-            <MessageCircle className="h-6 w-6" strokeWidth={1.8} />
+            <MessageCircle className="h-5 w-5" strokeWidth={1.8} />
           </RailButton>
 
           <RailButton label="Share" onClick={share} ariaLabel="Share reel">
-            <Share2 className="h-5 w-5" strokeWidth={1.8} />
+            <Share2 className="h-[18px] w-[18px]" strokeWidth={1.8} />
           </RailButton>
 
           <RailButton
@@ -229,19 +229,19 @@ function ReelItem({ reel }: { reel: Reel }) {
             }}
             ariaLabel="Save reel"
           >
-            <Bookmark className="h-5 w-5" strokeWidth={1.8} />
+            <Bookmark className="h-[18px] w-[18px]" strokeWidth={1.8} />
           </RailButton>
 
           <RailButton label="" onClick={share} ariaLabel="More options">
-            <MoreHorizontal className="h-5 w-5" />
+            <MoreHorizontal className="h-[18px] w-[18px]" />
           </RailButton>
         </div>
 
 
         {/* Bottom author block */}
         <div
-          className="pointer-events-none absolute inset-x-0 bottom-0 z-10 bg-gradient-to-t from-black/90 via-black/45 to-transparent px-3 pt-20 text-white"
-          style={{ paddingBottom: "calc(5.75rem + env(safe-area-inset-bottom))" }}
+          className="pointer-events-none absolute inset-x-0 bottom-0 z-10 bg-gradient-to-t from-black/90 via-black/45 to-transparent px-3 pt-16 text-white"
+          style={{ paddingBottom: "calc(1rem + env(safe-area-inset-bottom))" }}
         >
           <div className="pointer-events-auto grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 pr-16">
             <Link to="/u/$username" params={{ username: reel.author.username }} className="flex min-w-0 items-center gap-2.5">
@@ -306,11 +306,11 @@ function RailButton({
   ariaLabel: string;
 }) {
   return (
-    <button onClick={onClick} aria-label={ariaLabel} className="flex flex-col items-center gap-1.5">
-      <span className="grid h-11 w-11 place-items-center rounded-full bg-white/10 backdrop-blur-md transition-colors active:bg-white/20">
+    <button onClick={onClick} aria-label={ariaLabel} className="flex flex-col items-center gap-1">
+      <span className="grid h-9 w-9 place-items-center rounded-full bg-white/10 backdrop-blur-md transition-colors active:bg-white/20">
         {children}
       </span>
-      {label && <span className="text-[11px] font-semibold">{label}</span>}
+      {label && <span className="text-[10px] font-semibold">{label}</span>}
     </button>
   );
 

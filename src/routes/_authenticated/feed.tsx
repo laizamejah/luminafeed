@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
+import { prefetchSignedUrls, getSignedUrl, warmImage } from "@/hooks/use-signed-url";
 import { fetchFeed, type FeedScope } from "@/lib/feed";
 import { PostCard } from "@/components/post-card";
 import { PostComposer } from "@/components/post-composer";
@@ -32,6 +33,44 @@ function FeedPage() {
     queryKey: ["feed", user?.id ?? null, hideReels, kidOnly, scope],
     queryFn: () => fetchFeed(user?.id ?? null, hideReels, kidOnly, scope),
   });
+
+  const qc = useQueryClient();
+
+  // Warm every access link in one batched request, then eagerly decode the
+  // first screens' images so scrolling hits already-painted media.
+  useEffect(() => {
+    if (!posts?.length) return;
+    const paths: string[] = [];
+    for (const p of posts) {
+      for (const m of p.media ?? []) {
+        if (m.storage_path) paths.push(m.storage_path);
+        if (m.thumbnail_path) paths.push(m.thumbnail_path);
+      }
+    }
+    prefetchSignedUrls(qc, "media", paths);
+
+    let cancelled = false;
+    const eager = posts
+      .flatMap((p) => p.media ?? [])
+      .slice(0, 10)
+      .map((m) => (m.media_type === "video" ? m.thumbnail_path : m.storage_path))
+      .filter((p): p is string => !!p);
+    (async () => {
+      for (const path of eager) {
+        try {
+          const url = await getSignedUrl("media", path);
+          if (cancelled) return;
+          warmImage(url);
+        } catch {
+          /* ignore */
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [posts, qc]);
+
 
   return (
     <div className={compact ? "mx-auto max-w-xl" : "mx-auto max-w-2xl"}>

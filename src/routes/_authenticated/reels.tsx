@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { prefetchSignedUrls } from "@/hooks/use-signed-url";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser, useCurrentProfile, useKidStatus } from "@/hooks/use-current-user";
 import { PostMedia } from "@/components/post-media";
@@ -8,7 +9,7 @@ import { AvatarImage } from "@/components/avatar-image";
 import { CommentsPanel } from "@/components/comments-panel";
 import { Heart, MessageCircle, Share2, Bookmark, MoreHorizontal, Music2, X } from "lucide-react";
 import { toast } from "sonner";
-import { useIsMobile } from "@/hooks/use-mobile";
+
 
 
 export const Route = createFileRoute("/_authenticated/reels")({
@@ -56,6 +57,13 @@ function ReelsPage() {
     },
   });
 
+  const qcRoot = useQueryClient();
+  useEffect(() => {
+    if (!reels?.length) return;
+    const paths = reels.flatMap((r) => r.media.flatMap((m) => [m.storage_path, m.thumbnail_path]));
+    prefetchSignedUrls(qcRoot, "media", paths);
+  }, [reels, qcRoot]);
+
   if (isLoading) return <div className="p-8 text-sm text-muted-foreground">Loading reels…</div>;
   if (!reels?.length) return (
     <div className="p-12 text-center">
@@ -80,7 +88,7 @@ function ReelItem({ reel }: { reel: Reel }) {
   const qc = useQueryClient();
   const { data: user } = useCurrentUser();
   const media = [...reel.media].sort((a, b) => a.position - b.position)[0];
-  const isMobile = useIsMobile();
+  
   const isOwn = user?.id === reel.user_id;
   const [commentsOpen, setCommentsOpen] = useState(false);
 
@@ -176,8 +184,8 @@ function ReelItem({ reel }: { reel: Reel }) {
           thumbnailPath={media.thumbnail_path}
           autoplayOnView
           initialMuted={false}
-          preload={isMobile ? "auto" : "metadata"}
-          unloadOnExit
+          preload="auto"
+          unloadOnExit={false}
           showMuteButton={false}
           fill
           objectFit="contain"

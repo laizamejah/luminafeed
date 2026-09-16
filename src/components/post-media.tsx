@@ -30,7 +30,7 @@ export function PostMedia({
   autoplayOnView = false,
   initialMuted = true,
   preload = "auto",
-  unloadOnExit = true,
+  unloadOnExit = false,
   showMuteButton = true,
   fill = false,
   objectFit = "cover",

@@ -9,7 +9,7 @@ import { AvatarImage } from "@/components/avatar-image";
 import { CommentsPanel } from "@/components/comments-panel";
 import { Heart, MessageCircle, Share2, Bookmark, MoreHorizontal, Music2, X } from "lucide-react";
 import { toast } from "sonner";
-import { useIsMobile } from "@/hooks/use-mobile";
+
 
 
 export const Route = createFileRoute("/_authenticated/reels")({

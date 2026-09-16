@@ -184,8 +184,8 @@ function ReelItem({ reel }: { reel: Reel }) {
           thumbnailPath={media.thumbnail_path}
           autoplayOnView
           initialMuted={false}
-          preload={isMobile ? "auto" : "metadata"}
-          unloadOnExit
+          preload="auto"
+          unloadOnExit={false}
           showMuteButton={false}
           fill
           objectFit="contain"

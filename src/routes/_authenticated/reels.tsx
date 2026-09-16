@@ -88,7 +88,7 @@ function ReelItem({ reel }: { reel: Reel }) {
   const qc = useQueryClient();
   const { data: user } = useCurrentUser();
   const media = [...reel.media].sort((a, b) => a.position - b.position)[0];
-  const isMobile = useIsMobile();
+  
   const isOwn = user?.id === reel.user_id;
   const [commentsOpen, setCommentsOpen] = useState(false);
 

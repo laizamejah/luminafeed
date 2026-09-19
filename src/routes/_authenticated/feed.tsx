@@ -103,7 +103,7 @@ function FeedPage() {
       </div>
 
       {me && (
-        <PostComposer />
+        <div className="hidden md:block"><PostComposer /></div>
       )}
 
       {isLoading && (

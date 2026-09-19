@@ -82,7 +82,7 @@ export function StoriesBar() {
     refetchInterval: 60_000,
   });
 
-  const { data: viewedRows = [] } = useQuery({
+  const { data: viewedRows } = useQuery({
     queryKey: ["story-views", user?.id],
     enabled: !!user?.id,
     queryFn: async () => {
@@ -96,6 +96,7 @@ export function StoriesBar() {
   });
 
   useEffect(() => {
+    if (!viewedRows) return;
     setViewedIds(new Set(viewedRows.map((row) => row.story_id)));
   }, [viewedRows]);
 

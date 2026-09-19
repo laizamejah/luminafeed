@@ -74,7 +74,9 @@ function FeedPage() {
 
   return (
     <div className={compact ? "mx-auto max-w-xl" : "mx-auto max-w-2xl"}>
-      <div className="sticky top-0 md:top-0 z-10 bg-background/85 backdrop-blur border-b border-border">
+      <StoriesBar />
+
+      <div className="sticky top-14 z-10 hidden bg-background/85 backdrop-blur border-b border-border md:block md:top-0">
         <div className="hidden md:flex items-baseline justify-between px-4 py-6">
           <h1 className="font-serif text-3xl">Feed</h1>
           <span className="text-xs text-muted-foreground">Chronological · no algorithm</span>
@@ -103,8 +105,6 @@ function FeedPage() {
       {me && (
         <PostComposer />
       )}
-
-      <StoriesBar />
 
       {isLoading && (
         <div className="space-y-8 p-4">

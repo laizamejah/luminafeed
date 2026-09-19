@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Home, Play, Radio, PlusSquare, Music, User, Search, Bell, MessageCircle, Map, ShoppingBag, Baby, Settings as SettingsIcon, MoreVertical, Shield } from "lucide-react";
+import { Home, Play, Radio, PlusSquare, Music, User, Search, Bell, MessageCircle, Map, ShoppingBag, Baby, Settings as SettingsIcon, MoreVertical, Shield, Heart, Send, Plus, ChevronDown } from "lucide-react";
 import { Logo } from "./logo";
 import { cn } from "@/lib/utils";
 import type { ReactNode } from "react";
@@ -31,6 +31,14 @@ const mobileBottomNav = [
   { to: "/live" as const, label: "Live", icon: Radio },
   { to: "/create" as const, label: "Create", icon: PlusSquare, prominent: true },
   { to: "/search" as const, label: "Music", icon: Music },
+  { to: "/me" as const, label: "Profile", icon: User },
+];
+
+const feedBottomNav = [
+  { to: "/feed" as const, label: "Home", icon: Home },
+  { to: "/reels" as const, label: "Reels", icon: Play },
+  { to: "/messages" as const, label: "Messages", icon: Send, badgeKey: "messages" as const },
+  { to: "/search" as const, label: "Search", icon: Search },
   { to: "/me" as const, label: "Profile", icon: User },
 ];
 
@@ -102,6 +110,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const { data: isAdmin } = useIsAdmin();
   const counts = useCounts();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const isFeed = pathname === "/feed";
 
 
   const isActive = (to: string) => {
@@ -215,10 +224,28 @@ export function AppShell({ children }: { children: ReactNode }) {
 
       {/* Mobile top bar — liquid glass, truly fixed */}
       <header
-        className="md:hidden fixed top-0 inset-x-0 z-40 flex items-center justify-between liquid-glass border-x-0 border-t-0 px-2"
-        style={{ position: "fixed", paddingTop: "env(safe-area-inset-top)", height: "calc(3.5rem + env(safe-area-inset-top))" }}
+        className={cn(
+          "md:hidden fixed top-0 inset-x-0 z-40 flex items-center justify-between border-x-0 border-t-0 px-2",
+          isFeed ? "border-b border-border bg-background" : "liquid-glass",
+        )}
+        style={{ position: "fixed", paddingTop: "env(safe-area-inset-top)", height: "calc(3.75rem + env(safe-area-inset-top))" }}
       >
-
+        {isFeed ? (
+          <>
+            <Link to="/create" aria-label="Create" className="grid h-11 w-11 place-items-center text-foreground">
+              <Plus className="h-8 w-8 stroke-[1.8]" />
+            </Link>
+            <Link to="/feed" className="absolute left-1/2 flex -translate-x-1/2 items-center gap-1" aria-label="Lumina home">
+              <Logo className="text-[1.9rem] text-foreground" />
+              <ChevronDown className="mt-1 h-5 w-5" />
+            </Link>
+            <Link to="/notifications" aria-label="Notifications" className="relative grid h-11 w-11 place-items-center text-foreground">
+              <Heart className="h-7 w-7 stroke-[1.8]" />
+              <Badge count={counts.notifications} />
+            </Link>
+          </>
+        ) : (
+        <>
         <div className="flex items-center gap-1">
           <Sheet open={mobileNavOpen} onOpenChange={setMobileNavOpen}>
             <SheetTrigger asChild>
@@ -250,6 +277,8 @@ export function AppShell({ children }: { children: ReactNode }) {
           </Link>
           <ThemeToggle />
         </div>
+        </>
+        )}
       </header>
 
       <main className="w-full max-w-full overflow-x-clip pt-14 md:pt-14 lg:pt-0">
@@ -262,11 +291,11 @@ export function AppShell({ children }: { children: ReactNode }) {
         style={{ position: "fixed", paddingBottom: "env(safe-area-inset-bottom)" }}
       >
 
-        <div className="mx-auto grid max-w-lg grid-cols-6 items-center">
-          {mobileBottomNav.map((item) => {
+        <div className={cn("mx-auto grid max-w-lg items-center", isFeed ? "grid-cols-5" : "grid-cols-6")}>
+          {(isFeed ? feedBottomNav : mobileBottomNav).map((item) => {
             const active = isActive(item.to);
             const Icon = item.icon;
-            if (item.prominent) {
+            if ("prominent" in item && item.prominent) {
               return (
                 <Link
                   key={item.to}
@@ -284,10 +313,18 @@ export function AppShell({ children }: { children: ReactNode }) {
               <Link
                 key={item.to}
                 to={item.to}
-                className={cn("flex flex-col items-center gap-1 py-3 text-[10px]", active ? "text-foreground" : "text-muted-foreground")}
+                className={cn(
+                  "relative flex flex-col items-center justify-center",
+                  isFeed ? "h-16 py-2 text-foreground" : "gap-1 py-3 text-[10px]",
+                  !isFeed && (active ? "text-foreground" : "text-muted-foreground"),
+                )}
+                aria-label={item.label}
               >
-                <Icon className="h-5 w-5" />
-                <span>{item.label}</span>
+                <span className="relative">
+                  <Icon className={cn(isFeed ? "h-7 w-7 stroke-[1.8]" : "h-5 w-5", active && item.to === "/feed" && "fill-current")} />
+                  {"badgeKey" in item && <Badge count={badgeFor(item.badgeKey)} />}
+                </span>
+                {!isFeed && <span>{item.label}</span>}
               </Link>
             );
           })}

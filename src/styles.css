@@ -59,6 +59,7 @@
   --ochre: oklch(0.68 0.12 62);
   --story-blue: oklch(0.58 0.2 255);
   --story-blue-foreground: oklch(0.985 0.008 85);
+  --story-ring: conic-gradient(from 210deg, oklch(0.78 0.18 70), oklch(0.65 0.24 25), oklch(0.62 0.25 335), oklch(0.72 0.2 75));
 }
 
 .dark {
@@ -84,6 +85,7 @@
   --ochre: oklch(0.72 0.13 62);
   --story-blue: oklch(0.66 0.19 255);
   --story-blue-foreground: oklch(0.98 0.004 85);
+  --story-ring: conic-gradient(from 210deg, oklch(0.78 0.18 70), oklch(0.65 0.24 25), oklch(0.68 0.24 335), oklch(0.75 0.19 75));
 }
 
 @layer base {
@@ -171,6 +173,8 @@
 }
 
 .scrollbar-none::-webkit-scrollbar { display: none; }
+
+.story-ring { background: var(--story-ring); }
 
 /* leaflet dark tweaks */
 .leaflet-container { background: var(--color-muted); font-family: var(--font-sans); }

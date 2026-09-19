@@ -82,7 +82,7 @@ export function StoriesBar() {
     refetchInterval: 60_000,
   });
 
-  const { data: viewedRows = [] } = useQuery({
+  const { data: viewedRows } = useQuery({
     queryKey: ["story-views", user?.id],
     enabled: !!user?.id,
     queryFn: async () => {
@@ -96,6 +96,7 @@ export function StoriesBar() {
   });
 
   useEffect(() => {
+    if (!viewedRows) return;
     setViewedIds(new Set(viewedRows.map((row) => row.story_id)));
   }, [viewedRows]);
 
@@ -178,30 +179,32 @@ export function StoriesBar() {
 
   return (
     <>
-      <div className="scrollbar-none flex flex-row gap-3 overflow-x-auto overscroll-x-contain border-b border-border p-4 touch-pan-x">
+      <div className="scrollbar-none flex flex-row gap-3 overflow-x-auto overscroll-x-contain border-b border-border px-3 py-3 touch-pan-x sm:gap-4 sm:px-4 sm:py-4">
         {me && (
-          <button onClick={() => setCreating(true)} className="flex w-[76px] shrink-0 flex-col items-center gap-1.5">
+          <button onClick={() => setCreating(true)} className="flex w-[78px] shrink-0 flex-col items-center gap-1.5">
             <div className="relative">
-              <div className="rounded-full border border-border bg-card p-1">
-                <AvatarImage path={me.avatar_url} name={me.display_name ?? me.username} size={62} />
+              <div className="rounded-full bg-border p-[3px]">
+                <div className="rounded-full bg-background p-[3px]">
+                  <AvatarImage path={me.avatar_url} name={me.display_name ?? me.username} size={66} />
+                </div>
               </div>
-              <span className="absolute -bottom-1 left-1/2 grid h-6 w-6 -translate-x-1/2 place-items-center rounded-full border-2 border-background bg-[color:var(--story-blue)] text-[color:var(--story-blue-foreground)] shadow-sm">
-                <Plus className="h-4 w-4" />
+              <span className="absolute bottom-0 right-0 grid h-7 w-7 place-items-center rounded-full border-[3px] border-background bg-[color:var(--story-blue)] text-[color:var(--story-blue-foreground)]">
+                <Plus className="h-5 w-5 stroke-[3]" />
               </span>
             </div>
-            <span className="mt-1 w-full truncate text-center text-[11px] font-medium">Create story</span>
+            <span className="w-full truncate text-center text-xs text-muted-foreground">Your story</span>
           </button>
         )}
         {groups.map((g, i) => {
           const viewed = g.items.length > 0 && g.items.every((item) => viewedIds.has(item.id));
           return (
-            <button key={g.user_id} onClick={() => setViewIndex(i)} className="flex w-[76px] shrink-0 flex-col items-center gap-1.5">
-              <div className={viewed ? "rounded-full bg-border p-[2px]" : "rounded-full bg-[linear-gradient(135deg,var(--story-blue),var(--ochre))] p-[2px]"}>
+            <button key={g.user_id} onClick={() => setViewIndex(i)} className="flex w-[78px] shrink-0 flex-col items-center gap-1.5">
+              <div className={viewed ? "rounded-full bg-border p-[3px]" : "story-ring rounded-full p-[3px]"}>
                 <div className="rounded-full bg-background p-[3px]">
-                  <AvatarImage path={g.avatar_url} name={g.display_name ?? g.username} size={62} />
+                  <AvatarImage path={g.avatar_url} name={g.display_name ?? g.username} size={66} />
                 </div>
               </div>
-              <span className="w-full truncate text-center text-[11px]">{g.display_name || g.username}</span>
+              <span className="w-full truncate text-center text-xs">{g.username}</span>
             </button>
           );
         })}

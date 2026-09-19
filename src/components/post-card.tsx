@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Heart, MessageCircle, Send, MapPin, ThumbsDown, Share2, Music, Play, Pause, X, Aperture } from "lucide-react";
+import { Heart, MessageCircle, Send, MapPin, ThumbsDown, Music, Play, Pause, X, Aperture, Bookmark, MoreHorizontal } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -160,34 +160,31 @@ export function PostCard({ post }: { post: FeedPost }) {
   }
 
   return (
-    <article ref={cardRef} className="mx-auto w-full max-w-2xl overflow-hidden border-b-[6px] border-border/40 bg-card">
+    <article ref={cardRef} className="mx-auto w-full max-w-2xl overflow-hidden border-b border-border bg-card md:mb-4 md:rounded-lg md:border">
       {/* Header */}
-      <div className="flex items-center gap-3 px-3 pb-2 pt-3 sm:px-4">
+      <div className="flex items-center gap-3 px-3 py-3 sm:px-4">
         <Link to="/u/$username" params={{ username: post.author.username }} className="shrink-0">
           <AvatarImage path={post.author.avatar_url} name={post.author.display_name ?? post.author.username} size={40} />
         </Link>
         <div className="min-w-0 flex-1">
-          <Link to="/u/$username" params={{ username: post.author.username }} className="block truncate text-[15px] font-semibold hover:underline">
-            {post.author.display_name || post.author.username}
+          <Link to="/u/$username" params={{ username: post.author.username }} className="block truncate text-sm font-semibold hover:underline">
+            {post.author.username}
           </Link>
           <div className="flex min-w-0 items-center gap-1.5 truncate text-xs text-muted-foreground">
-            <span className="truncate">@{post.author.username}</span>
-            <span>·</span>
-            <time className="shrink-0">{formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}</time>
             {post.location_name && (
               <>
-                <span>·</span>
                 <span className="inline-flex min-w-0 items-center gap-1 truncate"><MapPin className="h-3 w-3 shrink-0" />{post.location_name}</span>
               </>
             )}
           </div>
         </div>
+        <button aria-label="Post options" className="grid h-9 w-9 shrink-0 place-items-center rounded-full hover:bg-secondary">
+          <MoreHorizontal className="h-6 w-6" />
+        </button>
       </div>
 
-      {/* Text body — Facebook style, above the media */}
-      {post.caption && (
-        <p className="whitespace-pre-wrap break-words px-3 pb-3 text-[15px] leading-snug sm:px-4">{post.caption}</p>
-      )}
+      {/* Text-only posts keep their caption as the main body. */}
+      {post.caption && media.length === 0 && <p className="whitespace-pre-wrap break-words px-3 pb-5 text-[15px] leading-snug sm:px-4">{post.caption}</p>}
 
       {/* Media */}
       {media.length > 0 && (
@@ -211,8 +208,8 @@ export function PostCard({ post }: { post: FeedPost }) {
               height={media[idx].height}
               thumbnailPath={media[idx].thumbnail_path}
               autoplayOnView={media[idx].media_type === "video"}
-              preload="metadata"
-              unloadOnExit
+              preload="auto"
+              unloadOnExit={false}
               className="rounded-none"
             />
           </div>
@@ -284,43 +281,50 @@ export function PostCard({ post }: { post: FeedPost }) {
       )}
 
       {/* Actions */}
-      <div className="mt-1 grid grid-cols-5 items-center border-t border-border/60 px-1 py-1 text-muted-foreground">
+      <div className="flex items-center gap-4 px-3 pb-1 pt-3 text-foreground sm:px-4">
         <button
           onClick={() => user ? toggleLike.mutate() : toast.info("Sign in to react")}
-          className="flex items-center justify-center gap-2 rounded-lg py-2 text-sm transition-colors hover:bg-secondary/60 hover:text-foreground"
+          className="transition-transform active:scale-90"
           aria-label="Like"
         >
-          <Heart className={`h-5 w-5 ${likeState?.liked ? "fill-[color:var(--ochre)] text-[color:var(--ochre)]" : ""}`} />
-          {showMetrics && <span className="tabular-nums text-xs">{likeState?.count ?? 0}</span>}
-        </button>
-
-        <button
-          onClick={() => user ? toggleDislike.mutate() : toast.info("Sign in to react")}
-          className="flex items-center justify-center gap-2 rounded-lg py-2 text-sm transition-colors hover:bg-secondary/60 hover:text-foreground"
-          aria-label="Dislike"
-        >
-          <ThumbsDown className={`h-5 w-5 ${dislikeState?.disliked ? "fill-current" : ""}`} />
-          {showMetrics && <span className="tabular-nums text-xs">{dislikeState?.count ?? 0}</span>}
+          <Heart className={`h-7 w-7 stroke-[1.8] ${likeState?.liked ? "fill-destructive text-destructive" : ""}`} />
         </button>
 
         {post.comments_enabled ? (
-          <Link to="/p/$postId" params={{ postId: post.id }} className="flex items-center justify-center gap-2 rounded-lg py-2 text-sm transition-colors hover:bg-secondary/60 hover:text-foreground" aria-label="Comment">
-            <MessageCircle className="h-5 w-5" />
-            {showMetrics && <span className="tabular-nums text-xs">{commentCount ?? 0}</span>}
+          <Link to="/p/$postId" params={{ postId: post.id }} className="transition-transform active:scale-90" aria-label="Comment">
+            <MessageCircle className="h-7 w-7 stroke-[1.8]" />
           </Link>
         ) : me && me.id !== post.user_id ? (
-          <Link to="/messages/$userId" params={{ userId: post.user_id }} className="flex items-center justify-center gap-2 rounded-lg py-2 text-sm transition-colors hover:bg-secondary/60 hover:text-foreground">
-            <Send className="h-5 w-5" /><span className="text-xs">DM</span>
+          <Link to="/messages/$userId" params={{ userId: post.user_id }} className="transition-transform active:scale-90" aria-label="Send private message">
+            <Send className="h-7 w-7 stroke-[1.8]" />
           </Link>
         ) : (
-          <span className="flex items-center justify-center gap-2 py-2 text-sm text-muted-foreground/60"><MessageCircle className="h-5 w-5" /></span>
+          <span className="text-muted-foreground/60"><MessageCircle className="h-7 w-7 stroke-[1.8]" /></span>
         )}
 
-        <button onClick={share} className="flex items-center justify-center gap-2 rounded-lg py-2 text-sm transition-colors hover:bg-secondary/60 hover:text-foreground" aria-label="Share">
-          <Share2 className="h-5 w-5" />
+        <button onClick={share} className="transition-transform active:scale-90" aria-label="Share">
+          <Send className="h-7 w-7 -rotate-6 stroke-[1.8]" />
         </button>
+        <button aria-label="Save post" className="ml-auto transition-transform active:scale-90">
+          <Bookmark className="h-7 w-7 stroke-[1.8]" />
+        </button>
+        <div className="hidden md:flex md:items-center md:gap-2">
+          <button onClick={() => user ? toggleDislike.mutate() : toast.info("Sign in to react")} className="p-1" aria-label="Dislike">
+            <ThumbsDown className={`h-5 w-5 ${dislikeState?.disliked ? "fill-current" : ""}`} />
+          </button>
+          <TipButton recipientId={post.user_id} recipientName={post.author.display_name ?? post.author.username} postId={post.id} />
+        </div>
+      </div>
 
-        <TipButton recipientId={post.user_id} recipientName={post.author.display_name ?? post.author.username} postId={post.id} />
+      <div className="px-3 pb-4 sm:px-4">
+        {showMetrics && <p className="text-sm font-semibold">{likeState?.count ?? 0} likes</p>}
+        {post.caption && media.length > 0 && (
+          <p className="mt-1 whitespace-pre-wrap break-words text-sm leading-snug"><Link to="/u/$username" params={{ username: post.author.username }} className="mr-1 font-semibold">{post.author.username}</Link>{post.caption}</p>
+        )}
+        {post.comments_enabled && (commentCount ?? 0) > 0 && (
+          <Link to="/p/$postId" params={{ postId: post.id }} className="mt-1 block text-sm text-muted-foreground">View all {commentCount} comments</Link>
+        )}
+        <time className="mt-1 block text-[10px] uppercase text-muted-foreground">{formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}</time>
       </div>
 
 

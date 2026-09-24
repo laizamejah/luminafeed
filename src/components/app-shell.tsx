@@ -110,7 +110,8 @@ export function AppShell({ children }: { children: ReactNode }) {
   const { data: isAdmin } = useIsAdmin();
   const counts = useCounts();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
-  const isFeed = pathname === "/feed";
+  // Instagram-style chrome on every signed-in page
+  const isFeed = true;
 
 
   const isActive = (to: string) => {

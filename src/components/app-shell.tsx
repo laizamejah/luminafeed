@@ -112,6 +112,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   // Instagram-style chrome on every signed-in page
   const isFeed = true;
+  const isSettings = pathname === "/settings";
 
 
   const isActive = (to: string) => {
@@ -215,7 +216,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       className="min-h-screen w-full max-w-full overflow-x-clip bg-background lg:pl-64"
       style={{
         paddingTop: "env(safe-area-inset-top)",
-        paddingBottom: "calc(5.5rem + env(safe-area-inset-bottom))",
+        paddingBottom: isSettings ? "env(safe-area-inset-bottom)" : "calc(5.5rem + env(safe-area-inset-bottom))",
       }}
     >
       {/* Desktop sidebar */}
@@ -224,7 +225,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       </aside>
 
       {/* Mobile top bar — liquid glass, truly fixed */}
-      <header
+      {!isSettings && <header
         className={cn(
           "md:hidden fixed top-0 inset-x-0 z-40 flex items-center justify-between border-x-0 border-t-0 px-2",
           isFeed ? "border-b border-border bg-background" : "liquid-glass",
@@ -280,14 +281,14 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
         </>
         )}
-      </header>
+      </header>}
 
-      <main className="w-full max-w-full overflow-x-clip pt-14 md:pt-14 lg:pt-0">
+      <main className={cn("w-full max-w-full overflow-x-clip lg:pt-0", isSettings ? "pt-0" : "pt-14 md:pt-14")}>
         {children}
       </main>
 
       {/* Mobile bottom bar — liquid glass, safe-area aware */}
-      <nav
+      {!isSettings && <nav
         className="md:hidden fixed bottom-0 inset-x-0 z-40 liquid-glass border-x-0 border-b-0"
         style={{ position: "fixed", paddingBottom: "env(safe-area-inset-bottom)" }}
       >
@@ -330,7 +331,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             );
           })}
         </div>
-      </nav>
+      </nav>}
     </div>
   );
 }

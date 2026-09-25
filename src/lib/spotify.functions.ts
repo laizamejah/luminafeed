@@ -108,8 +108,17 @@ export const searchSpotify = createServerFn({ method: "POST" })
         };
       });
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Spotify search failed";
-      console.error("spotify search failed", err);
-      throw new Error(message);
+      console.warn("spotify search failed, falling back to iTunes", err);
+      const results = await fetchItunesPreviews(q);
+      return results
+        .filter((it) => it.previewUrl)
+        .slice(0, 25)
+        .map((it, i) => ({
+          id: `itunes-${i}-${normalize(it.trackName)}`,
+          title: it.trackName,
+          artist: it.artistName,
+          artwork_url: (it as ItunesTrack & { artworkUrl100?: string }).artworkUrl100 ?? null,
+          preview_url: it.previewUrl ?? null,
+        }));
     }
   });

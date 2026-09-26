@@ -10,6 +10,7 @@ import { formatDistanceToNow } from "date-fns";
 import { toast } from "sonner";
 import { CommentsPanel } from "./comments-panel";
 import { TipButton } from "./tip-dialog";
+import { Button } from "./ui/button";
 import type { ExifSummary } from "@/lib/exif";
 
 
@@ -44,7 +45,7 @@ export function PostCard({ post }: { post: FeedPost }) {
   const showMetrics = (post.author.show_metrics_publicly || isOwnPost) && !hideCounts;
   const exif = media[idx]?.exif ?? null;
 
-  // Music player — auto-play muted then unmute on first interaction; auto-play when card visible
+  // Music player stays with the post; its compact control lives in the header.
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const cardRef = useRef<HTMLElement | null>(null);
   const [playing, setPlaying] = useState(false);
@@ -170,6 +171,18 @@ export function PostCard({ post }: { post: FeedPost }) {
           <Link to="/u/$username" params={{ username: post.author.username }} className="block truncate text-sm font-semibold hover:underline">
             {post.author.username}
           </Link>
+          <div className="flex min-w-0 items-center gap-1 text-xs text-muted-foreground">
+            <time className="shrink-0" dateTime={post.created_at}>{formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}</time>
+            {post.audio_preview_url && (
+              <>
+                <span aria-hidden="true" className="shrink-0">·</span>
+                <Music className="h-3 w-3 shrink-0" aria-hidden="true" />
+                <span className="min-w-0 truncate" title={[post.audio_title, post.audio_artist].filter(Boolean).join(" · ")}>
+                  {[post.audio_title, post.audio_artist].filter(Boolean).join(" · ") || "Music"}
+                </span>
+              </>
+            )}
+          </div>
           <div className="flex min-w-0 items-center gap-1.5 truncate text-xs text-muted-foreground">
             {post.location_name && (
               <>
@@ -178,6 +191,14 @@ export function PostCard({ post }: { post: FeedPost }) {
             )}
           </div>
         </div>
+        {post.audio_preview_url && (
+          <>
+            <Button type="button" variant="ghost" size="icon" onClick={toggleMusic} aria-label={playing ? "Pause music" : "Play music"} className="shrink-0 rounded-full" title={playing ? "Pause music" : "Play music"}>
+              {playing ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+            </Button>
+            <audio ref={audioRef} src={post.audio_preview_url} loop preload="none" onEnded={() => setPlaying(false)} />
+          </>
+        )}
         <button aria-label="Post options" className="grid h-9 w-9 shrink-0 place-items-center rounded-full hover:bg-secondary">
           <MoreHorizontal className="h-6 w-6" />
         </button>
@@ -226,25 +247,6 @@ export function PostCard({ post }: { post: FeedPost }) {
               {idx < media.length - 1 && <button onClick={() => setIdx(idx + 1)} className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-background/70 backdrop-blur px-3 py-1 text-sm">›</button>}
             </>
           )}
-        </div>
-      )}
-
-      {/* Music strip */}
-      {post.audio_preview_url && (
-        <div className="mx-3 mt-3 flex items-center gap-3 rounded-xl border border-border/70 bg-secondary/40 px-3 py-2 sm:mx-4">
-          {post.audio_artwork_url ? (
-            <img src={post.audio_artwork_url} alt="" className="h-9 w-9 rounded" />
-          ) : (
-            <div className="h-9 w-9 rounded bg-muted flex items-center justify-center"><Music className="h-4 w-4" /></div>
-          )}
-          <div className="flex-1 min-w-0 text-xs">
-            <div className="truncate font-medium">{post.audio_title}</div>
-            <div className="truncate text-muted-foreground">{post.audio_artist}</div>
-          </div>
-          <button onClick={toggleMusic} aria-label={playing ? "Pause" : "Play"} className="rounded-full bg-foreground text-background p-2">
-            {playing ? <Pause className="h-3 w-3" /> : <Play className="h-3 w-3" />}
-          </button>
-          <audio ref={audioRef} src={post.audio_preview_url} loop preload="none" onEnded={() => setPlaying(false)} />
         </div>
       )}
 
@@ -324,7 +326,6 @@ export function PostCard({ post }: { post: FeedPost }) {
         {post.comments_enabled && (commentCount ?? 0) > 0 && (
           <Link to="/p/$postId" params={{ postId: post.id }} className="mt-1 block text-sm text-muted-foreground">View all {commentCount} comments</Link>
         )}
-        <time className="mt-1 block text-[10px] uppercase text-muted-foreground">{formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}</time>
       </div>
 
 

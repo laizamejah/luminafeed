@@ -1,0 +1,3 @@
+- [ ] Owner post actions: edit, pin, save, archive/restore, delete and notification toggle.
+- [ ] Expanded editable profile with private birth date and working photo controls.
+- [ ] Facebook-style notifications with per-item read state and destinations.

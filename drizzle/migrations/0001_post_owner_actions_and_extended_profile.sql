@@ -1,0 +1,14 @@
+ALTER TABLE public.posts ADD COLUMN archived_at timestamptz, ADD COLUMN pinned_at timestamptz;
+ALTER POLICY "Posts are viewable by everyone" ON public.posts USING (archived_at IS NULL OR auth.uid() = user_id);
+ALTER POLICY "posts readable" ON public.posts USING (archived_at IS NULL OR auth.uid() = user_id);
+CREATE TABLE public.saved_posts (user_id uuid NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE, post_id uuid NOT NULL REFERENCES public.posts(id) ON DELETE CASCADE, created_at timestamptz NOT NULL DEFAULT now(), PRIMARY KEY (user_id, post_id));
+GRANT SELECT, INSERT, DELETE ON public.saved_posts TO authenticated;
+GRANT ALL ON public.saved_posts TO service_role;
+ALTER TABLE public.saved_posts ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Read own saved posts" ON public.saved_posts FOR SELECT TO authenticated USING (auth.uid() = user_id);
+CREATE POLICY "Save posts as self" ON public.saved_posts FOR INSERT TO authenticated WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Remove own saved posts" ON public.saved_posts FOR DELETE TO authenticated USING (auth.uid() = user_id);
+ALTER TABLE public.profiles ADD COLUMN occupation text, ADD COLUMN website text, ADD COLUMN work text, ADD COLUMN interests text;
+GRANT SELECT (occupation, website, work, interests) ON public.profiles TO anon, authenticated;
+ALTER TABLE public.profile_safety ADD COLUMN birth_date date, ADD COLUMN phone text, ADD COLUMN gender text;
+COMMENT ON COLUMN public.profile_safety.birth_date IS 'Private date of birth, readable only by account owner, guardian, or admin';

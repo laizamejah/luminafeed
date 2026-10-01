@@ -713,6 +713,7 @@ export type Database = {
       }
       posts: {
         Row: {
+          archived_at: string | null
           audio_artist: string | null
           audio_artwork_url: string | null
           audio_preview_url: string | null
@@ -726,9 +727,11 @@ export type Database = {
           latitude: number | null
           location_name: string | null
           longitude: number | null
+          pinned_at: string | null
           user_id: string
         }
         Insert: {
+          archived_at?: string | null
           audio_artist?: string | null
           audio_artwork_url?: string | null
           audio_preview_url?: string | null
@@ -742,9 +745,11 @@ export type Database = {
           latitude?: number | null
           location_name?: string | null
           longitude?: number | null
+          pinned_at?: string | null
           user_id: string
         }
         Update: {
+          archived_at?: string | null
           audio_artist?: string | null
           audio_artwork_url?: string | null
           audio_preview_url?: string | null
@@ -758,6 +763,7 @@ export type Database = {
           latitude?: number | null
           location_name?: string | null
           longitude?: number | null
+          pinned_at?: string | null
           user_id?: string
         }
         Relationships: [
@@ -772,25 +778,34 @@ export type Database = {
       }
       profile_safety: {
         Row: {
+          birth_date: string | null
           birth_year: number | null
           created_at: string
+          gender: string | null
           id: string
           is_kid: boolean
           parent_id: string | null
+          phone: string | null
         }
         Insert: {
+          birth_date?: string | null
           birth_year?: number | null
           created_at?: string
+          gender?: string | null
           id: string
           is_kid?: boolean
           parent_id?: string | null
+          phone?: string | null
         }
         Update: {
+          birth_date?: string | null
           birth_year?: number | null
           created_at?: string
+          gender?: string | null
           id?: string
           is_kid?: boolean
           parent_id?: string | null
+          phone?: string | null
         }
         Relationships: [
           {
@@ -826,9 +841,11 @@ export type Database = {
           hide_reels: boolean
           hometown: string | null
           id: string
+          interests: string | null
           is_kid: boolean
           location: string | null
           message_notifications: boolean
+          occupation: string | null
           parent_id: string | null
           relationship_status: string | null
           show_metrics_publicly: boolean
@@ -838,6 +855,8 @@ export type Database = {
           theme_preference: string
           username: string
           verified: boolean
+          website: string | null
+          work: string | null
         }
         Insert: {
           accent_color?: string
@@ -855,9 +874,11 @@ export type Database = {
           hide_reels?: boolean
           hometown?: string | null
           id: string
+          interests?: string | null
           is_kid?: boolean
           location?: string | null
           message_notifications?: boolean
+          occupation?: string | null
           parent_id?: string | null
           relationship_status?: string | null
           show_metrics_publicly?: boolean
@@ -867,6 +888,8 @@ export type Database = {
           theme_preference?: string
           username: string
           verified?: boolean
+          website?: string | null
+          work?: string | null
         }
         Update: {
           accent_color?: string
@@ -884,9 +907,11 @@ export type Database = {
           hide_reels?: boolean
           hometown?: string | null
           id?: string
+          interests?: string | null
           is_kid?: boolean
           location?: string | null
           message_notifications?: boolean
+          occupation?: string | null
           parent_id?: string | null
           relationship_status?: string | null
           show_metrics_publicly?: boolean
@@ -896,11 +921,46 @@ export type Database = {
           theme_preference?: string
           username?: string
           verified?: boolean
+          website?: string | null
+          work?: string | null
         }
         Relationships: [
           {
             foreignKeyName: "profiles_parent_id_fkey"
             columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      saved_posts: {
+        Row: {
+          created_at: string
+          post_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          post_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          post_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "saved_posts_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "saved_posts_user_id_fkey"
+            columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]

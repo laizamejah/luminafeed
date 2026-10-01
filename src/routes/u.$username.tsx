@@ -24,6 +24,11 @@ import { toast } from "sonner";
 
 export const Route = createFileRoute("/u/$username")({
   ssr: false,
+  head: () => ({ meta: [
+    { title: "Profile — Lumina" }, { name: "description", content: "View photographs and profile details on Lumina." },
+    { property: "og:title", content: "Profile — Lumina" }, { property: "og:description", content: "View photographs and profile details on Lumina." },
+    { property: "og:type", content: "profile" }, { name: "twitter:card", content: "summary" },
+  ] }),
   component: ProfilePage,
 });
 
@@ -224,10 +229,11 @@ function ProfilePage() {
         <div className="mt-4 flex items-center gap-2">
           {isMe ? (
             <>
-              <Link to="/settings" className="flex-1">
+              <Link to="/settings" className="min-w-0 flex-1">
                 <Button className="w-full"><LayoutGrid className="mr-2 h-4 w-4" /> Dashboard</Button>
               </Link>
-              <Link to="/create" className="flex-1">
+              <Button variant="outline" size="icon" aria-label="Edit profile" title="Edit profile" onClick={() => setEditDetails(true)}><Pencil className="h-4 w-4" /></Button>
+              <Link to="/create" className="min-w-0 flex-1">
                 <Button variant="secondary" className="w-full"><Plus className="mr-2 h-4 w-4" /> Create</Button>
               </Link>
             </>
@@ -375,6 +381,11 @@ function ProfilePage() {
             education: profile.education,
             category: profile.category,
             bio: profile.bio,
+             display_name: profile.display_name,
+             occupation: profile.occupation,
+             work: profile.work,
+             website: profile.website,
+             interests: profile.interests,
           }}
           onClose={() => setEditDetails(false)}
         />

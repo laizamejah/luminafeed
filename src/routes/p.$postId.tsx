@@ -6,6 +6,11 @@ import { CommentsPanel } from "@/components/comments-panel";
 
 export const Route = createFileRoute("/p/$postId")({
   ssr: false,
+  head: () => ({ meta: [
+    { title: "Post — Lumina" }, { name: "description", content: "View a post and its conversation on Lumina." },
+    { property: "og:title", content: "Post — Lumina" }, { property: "og:description", content: "View a post and its conversation on Lumina." },
+    { property: "og:type", content: "article" }, { name: "twitter:card", content: "summary" },
+  ] }),
   component: PostPage,
 });
 
@@ -16,17 +21,17 @@ function PostPage() {
     queryKey: ["post", postId],
     queryFn: async () => {
       const { data, error } = await supabase.from("posts").select(`
-        id, caption, created_at, latitude, longitude, location_name,
-        comments_enabled, is_reel, user_id,
+        id, caption, created_at, archived_at, pinned_at, latitude, longitude, location_name,
+        comments_enabled, is_reel, user_id, audio_preview_url, audio_title, audio_artist, audio_artwork_url,
         author:profiles!posts_user_id_fkey (id, username, display_name, avatar_url, show_metrics_publicly),
-        media:post_media (id, storage_path, media_type, width, height, position)
+        media:post_media (id, storage_path, media_type, width, height, thumbnail_path, position, exif)
       `).eq("id", postId).maybeSingle();
       if (error) throw error;
       return data as unknown as FeedPost | null;
     },
   });
 
-  if (!post) return <div className="p-8 text-sm text-muted-foreground">Loading…</div>;
+  if (!post) return <div className="p-8 text-sm text-muted-foreground">Post unavailable.</div>;
 
   return (
     <div className="mx-auto max-w-2xl">

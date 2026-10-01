@@ -2,7 +2,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { FeedPost } from "@/components/post-card";
 
 const SELECT = `
-  id, caption, created_at, latitude, longitude, location_name,
+  id, caption, created_at, archived_at, pinned_at, latitude, longitude, location_name,
   comments_enabled, is_reel, user_id,
   audio_preview_url, audio_title, audio_artist, audio_artwork_url,
   author:profiles!posts_user_id_fkey (id, username, display_name, avatar_url, show_metrics_publicly),
@@ -28,6 +28,7 @@ export async function fetchFeed(
   let query = supabase
     .from("posts")
     .select(SELECT)
+    .is("archived_at", null)
     // Strictly chronological — newest first, no ranking or algorithmic sorting.
     .order("created_at", { ascending: false })
     .limit(80);
@@ -50,6 +51,7 @@ export async function fetchGeoPosts(): Promise<FeedPost[]> {
   const { data, error } = await supabase
     .from("posts")
     .select(SELECT)
+    .is("archived_at", null)
     .not("latitude", "is", null)
     .not("longitude", "is", null)
     .order("created_at", { ascending: false })
@@ -68,7 +70,7 @@ export async function fetchAlbumFeed(albumId: string): Promise<FeedPost[]> {
   if (error) throw error;
   return ((data ?? []) as unknown as { post: FeedPost | null }[])
     .map((r) => r.post)
-    .filter((p): p is FeedPost => !!p);
+    .filter((p): p is FeedPost => !!p && !p.archived_at);
 }
 
 /** Chronological posts authored by a single user, shaped for <PostCard />. */
@@ -77,6 +79,8 @@ export async function fetchUserPosts(userId: string): Promise<FeedPost[]> {
     .from("posts")
     .select(SELECT)
     .eq("user_id", userId)
+    .is("archived_at", null)
+    .order("pinned_at", { ascending: false, nullsFirst: false })
     .order("created_at", { ascending: false })
     .limit(60);
   if (error) throw error;

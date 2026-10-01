@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Heart, MessageCircle, Send, MapPin, ThumbsDown, Music, Play, Pause, X, Aperture, Bookmark, MoreHorizontal } from "lucide-react";
+import { Heart, MessageCircle, Send, MapPin, ThumbsDown, Music, Play, Pause, X, Aperture, Bookmark, MoreHorizontal, Pin, Pencil, Lock, Archive, Trash2, Bell, BellOff, Images } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,6 +11,11 @@ import { toast } from "sonner";
 import { CommentsPanel } from "./comments-panel";
 import { TipButton } from "./tip-dialog";
 import { Button } from "./ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "./ui/dialog";
+import { Input } from "./ui/input";
+import { Textarea } from "./ui/textarea";
+import { Switch } from "./ui/switch";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "./ui/dropdown-menu";
 import type { ExifSummary } from "@/lib/exif";
 
 
@@ -18,6 +23,8 @@ export interface FeedPost {
   id: string;
   caption: string | null;
   created_at: string;
+  archived_at: string | null;
+  pinned_at: string | null;
   latitude: number | null;
   longitude: number | null;
   location_name: string | null;
@@ -39,6 +46,18 @@ export function PostCard({ post }: { post: FeedPost }) {
   const [idx, setIdx] = useState(0);
   const [viewerOpen, setViewerOpen] = useState(false);
   const [exifOpen, setExifOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [caption, setCaption] = useState(post.caption ?? "");
+  const [commentsEnabled, setCommentsEnabled] = useState(post.comments_enabled);
+  const [location, setLocation] = useState(post.location_name ?? "");
+  const [saving, setSaving] = useState(false);
+  const [locallyArchived, setLocallyArchived] = useState(false);
+  const [pinned, setPinned] = useState(!!post.pinned_at);
+  const [notifying, setNotifying] = useState(false);
+  const { data: saved = false } = useQuery({
+    queryKey: ["saved-post", user?.id, post.id], enabled: !!user,
+    queryFn: async () => { const { data, error } = await supabase.from("saved_posts").select("post_id").eq("user_id", user?.id ?? "").eq("post_id", post.id).maybeSingle(); if (error) throw error; return !!data; },
+  });
   const media = [...post.media].sort((a, b) => a.position - b.position);
   const isOwnPost = user?.id === post.user_id;
   const hideCounts = me?.hide_public_counts ?? false;
@@ -154,12 +173,42 @@ export function PostCard({ post }: { post: FeedPost }) {
     }
   }
 
+  async function updatePost(values: { caption?: string | null; location_name?: string | null; comments_enabled?: boolean; pinned_at?: string | null; archived_at?: string | null }) {
+    if (!isOwnPost || !user) return;
+    setSaving(true);
+    try {
+      const { data, error } = await supabase.from("posts").update(values).eq("id", post.id).eq("user_id", user.id).select("id").single();
+      if (error || !data) throw error ?? new Error("Could not update post");
+      await Promise.all([qc.invalidateQueries({ queryKey: ["feed"] }), qc.invalidateQueries({ queryKey: ["profile-feed"] }), qc.invalidateQueries({ queryKey: ["post", post.id] })]);
+      toast.success("Post updated");
+    } catch (error) { toast.error(error instanceof Error ? error.message : "Could not update post"); throw error; }
+    finally { setSaving(false); }
+  }
+
+  async function toggleSaved() {
+    if (!user) return toast.info("Sign in to save posts");
+    const result = saved ? await supabase.from("saved_posts").delete().eq("user_id", user.id).eq("post_id", post.id) : await supabase.from("saved_posts").insert({ user_id: user.id, post_id: post.id });
+    if (result.error) return toast.error(result.error.message);
+    await qc.invalidateQueries({ queryKey: ["saved-post", user.id, post.id] });
+    toast.success(saved ? "Removed from saved" : "Post saved");
+  }
+
+  async function deletePost() {
+    if (!user || !isOwnPost || !window.confirm("Delete this post permanently? This cannot be undone.")) return;
+    const { data, error } = await supabase.from("posts").delete().eq("id", post.id).eq("user_id", user.id).select("id").single();
+    if (error || !data) return toast.error(error?.message ?? "Could not delete post");
+    setLocallyArchived(true);
+    await Promise.all([qc.invalidateQueries({ queryKey: ["feed"] }), qc.invalidateQueries({ queryKey: ["profile-feed"] }), qc.invalidateQueries({ queryKey: ["post", post.id] })]);
+    toast.success("Post deleted");
+  }
+
   function toggleMusic() {
     if (!audioRef.current) return;
     if (playing) { audioRef.current.pause(); setPlaying(false); }
     else audioRef.current.play().then(() => setPlaying(true)).catch(() => {});
   }
 
+  if (locallyArchived) return null;
   return (
     <article ref={cardRef} className="mx-auto w-full max-w-2xl overflow-hidden border-b border-border bg-card md:mb-4 md:rounded-lg md:border">
       {/* Header */}
@@ -199,9 +248,22 @@ export function PostCard({ post }: { post: FeedPost }) {
             <audio ref={audioRef} src={post.audio_preview_url} loop preload="none" onEnded={() => setPlaying(false)} />
           </>
         )}
-        <button aria-label="Post options" className="grid h-9 w-9 shrink-0 place-items-center rounded-full hover:bg-secondary">
-          <MoreHorizontal className="h-6 w-6" />
-        </button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" aria-label="Post options" title="Post options" className="shrink-0"><MoreHorizontal className="h-6 w-6" /></Button></DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-64 p-2">
+            <DropdownMenuItem className="gap-3 py-3" onSelect={() => void toggleSaved()}><Bookmark />{saved ? "Remove saved post" : "Save post"}</DropdownMenuItem>
+            {isOwnPost && <>
+              <DropdownMenuItem className="gap-3 py-3" onSelect={() => { void updatePost({ pinned_at: pinned ? null : new Date().toISOString() }).then(() => setPinned(!pinned)).catch(() => {}); }}><Pin />{pinned ? "Unpin post" : "Pin post"}</DropdownMenuItem>
+              <DropdownMenuItem className="gap-3 py-3" onSelect={() => setEditOpen(true)}><Pencil />Edit post</DropdownMenuItem>
+              <DropdownMenuItem className="gap-3 py-3" onSelect={() => setEditOpen(true)}><Lock />Edit privacy & comments</DropdownMenuItem>
+              <DropdownMenuItem className="gap-3 py-3" onSelect={() => { void updatePost({ archived_at: post.archived_at ? null : new Date().toISOString() }).then(() => setLocallyArchived(!post.archived_at)).catch(() => {}); }}><Archive />{post.archived_at ? "Restore from archive" : "Move to archive"}</DropdownMenuItem>
+              <DropdownMenuItem className="gap-3 py-3" onSelect={() => void deletePost()}><Trash2 />Delete post</DropdownMenuItem>
+              <DropdownMenuItem className="gap-3 py-3" onSelect={() => { setNotifying(!notifying); toast.success(notifying ? "Post alerts turned off" : "Post alerts turned on for this visit"); }}>{notifying ? <BellOff /> : <Bell />}{notifying ? "Turn off post alerts" : "Be notified about this post"}</DropdownMenuItem>
+              <DropdownMenuItem className="gap-3 py-3" asChild><Link to="/albums"><Images />Add to album</Link></DropdownMenuItem>
+            </>}
+            <DropdownMenuItem className="gap-3 py-3" onSelect={() => void share()}><Send />Share post</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       {/* Text-only posts keep their caption as the main body. */}
@@ -307,9 +369,7 @@ export function PostCard({ post }: { post: FeedPost }) {
         <button onClick={share} className="transition-transform active:scale-90" aria-label="Share">
           <Send className="h-7 w-7 -rotate-6 stroke-[1.8]" />
         </button>
-        <button aria-label="Save post" className="ml-auto transition-transform active:scale-90">
-          <Bookmark className="h-7 w-7 stroke-[1.8]" />
-        </button>
+        <Button variant="ghost" size="icon" aria-label={saved ? "Remove saved post" : "Save post"} onClick={() => void toggleSaved()} className="ml-auto"><Bookmark className={`h-7 w-7 stroke-[1.8] ${saved ? "fill-primary text-primary" : ""}`} /></Button>
         <div className="hidden md:flex md:items-center md:gap-2">
           <button onClick={() => user ? toggleDislike.mutate() : toast.info("Sign in to react")} className="p-1" aria-label="Dislike">
             <ThumbsDown className={`h-5 w-5 ${dislikeState?.disliked ? "fill-current" : ""}`} />
@@ -342,6 +402,14 @@ export function PostCard({ post }: { post: FeedPost }) {
           onClose={() => setViewerOpen(false)}
         />
       )}
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogContent className="max-w-md"><DialogHeader><DialogTitle>Edit post</DialogTitle></DialogHeader>
+          <label className="text-sm font-medium">Caption<Textarea className="mt-2" value={caption} onChange={(e) => setCaption(e.target.value)} maxLength={2000} rows={4} /></label>
+          <label className="text-sm font-medium">Location<Input className="mt-2" value={location} onChange={(e) => setLocation(e.target.value)} maxLength={120} /></label>
+          <label className="flex items-center justify-between gap-3 text-sm font-medium">Allow comments<Switch checked={commentsEnabled} onCheckedChange={setCommentsEnabled} /></label>
+          <DialogFooter><Button variant="outline" onClick={() => setEditOpen(false)}>Cancel</Button><Button disabled={saving} onClick={() => void updatePost({ caption: caption.trim() || null, location_name: location.trim() || null, comments_enabled: commentsEnabled }).then(() => setEditOpen(false)).catch(() => {})}>Save</Button></DialogFooter>
+        </DialogContent>
+      </Dialog>
     </article>
   );
 }

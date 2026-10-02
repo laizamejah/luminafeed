@@ -13,7 +13,7 @@ import { Users, Plus, CalendarDays } from "lucide-react";
 export const Route = createFileRoute("/_authenticated/albums/")({
   ssr: false,
   component: AlbumsPage,
-  errorComponent: ({ error }) => <div role="alert" className="p-8 text-sm">{error.message}</div>,
+  errorComponent: ({ error }) => <div role="alert" className="p-8 text-sm">{error instanceof Error ? error.message : "Something went wrong"}</div>,
   notFoundComponent: () => <div className="p-8 text-sm">No albums found.</div>,
 });
 

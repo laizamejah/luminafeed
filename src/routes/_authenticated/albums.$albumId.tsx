@@ -15,7 +15,7 @@ import { ArrowLeft, UserPlus, Plus, Users } from "lucide-react";
 export const Route = createFileRoute("/_authenticated/albums/$albumId")({
   ssr: false,
   component: AlbumPage,
-  errorComponent: ({ error }) => <div role="alert" className="p-8 text-sm">{error.message}</div>,
+  errorComponent: ({ error }) => <div role="alert" className="p-8 text-sm">{error instanceof Error ? error.message : "Something went wrong"}</div>,
   notFoundComponent: () => <div className="p-8 text-sm">Album not found.</div>,
 });
 

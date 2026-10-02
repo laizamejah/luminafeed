@@ -57,7 +57,9 @@ export function ProfileDetailsDialog({
   async function save() {
     setBusy(true);
     try {
-      const { error } = await supabase.from("profiles").update(Object.fromEntries(Object.entries(form).map(([key, value]) => [key, value?.trim() || null]))).eq("id", userId);
+      const payload = Object.fromEntries(Object.entries(form).map(([key, value]) => [key, typeof value === "string" ? value.trim() || null : value ?? null]));
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error } = await supabase.from("profiles").update(payload as any).eq("id", userId);
       if (error) throw error;
       const date = birthDate ?? privateDetails?.birth_date ?? null;
       const { error: privateError } = await supabase.from("profile_safety").upsert({

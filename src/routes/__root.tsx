@@ -8,7 +8,7 @@ import {
   Scripts,
   type ErrorComponentProps,
 } from "@tanstack/react-router";
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import "../lib/fonts";
@@ -88,6 +88,12 @@ function RootShell({ children }: { children: ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const router = useRouter();
+  const [opening, setOpening] = useState(true);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => setOpening(false), 1100);
+    return () => window.clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     const { data: sub } = supabase.auth.onAuthStateChange((event) => {
@@ -103,6 +109,15 @@ function RootComponent() {
       <ThemeProvider>
         <Outlet />
         <Toaster />
+        {opening && (
+          <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-background" role="status" aria-label="Opening Lumina">
+            <img src="/icons/icon-192.png" alt="Lumina" width={96} height={96} className="h-24 w-24 object-contain" />
+            <div className="absolute bottom-[max(3rem,env(safe-area-inset-bottom))] flex flex-col items-center gap-1 text-center">
+              <span className="text-sm text-muted-foreground">from</span>
+              <span className="font-serif text-2xl font-semibold text-foreground">Lumina</span>
+            </div>
+          </div>
+        )}
       </ThemeProvider>
     </QueryClientProvider>
   );

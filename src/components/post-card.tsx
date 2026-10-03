@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Heart, MessageCircle, Send, MapPin, ThumbsDown, Music, Play, Pause, X, Aperture, Bookmark, MoreHorizontal, Pin, Pencil, Lock, Archive, Trash2, Bell, BellOff, Images } from "lucide-react";
+import { Heart, MessageCircle, Send, Repeat2, MapPin, ThumbsDown, Music, Play, Pause, X, Aperture, Bookmark, MoreHorizontal, Pin, Pencil, Lock, Archive, Trash2, Bell, BellOff, Images } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -345,31 +345,28 @@ export function PostCard({ post }: { post: FeedPost }) {
       )}
 
       {/* Actions */}
-      <div className="flex items-center gap-4 px-3 pb-1 pt-3 text-foreground sm:px-4">
-        <button
+      <div className="flex items-center gap-1 px-2 pb-1 pt-1 text-foreground sm:px-3">
+        <Button variant="ghost" size="icon"
           onClick={() => user ? toggleLike.mutate() : toast.info("Sign in to react")}
-          className="transition-transform active:scale-90"
+          className="h-9 w-9 active:scale-90"
           aria-label="Like"
         >
-          <Heart className={`h-7 w-7 stroke-[1.8] ${likeState?.liked ? "fill-destructive text-destructive" : ""}`} />
-        </button>
+          <Heart className={`!h-5 !w-5 stroke-[1.8] ${likeState?.liked ? "fill-destructive text-destructive" : ""}`} />
+        </Button>
 
         {post.comments_enabled ? (
-          <Link to="/p/$postId" params={{ postId: post.id }} className="transition-transform active:scale-90" aria-label="Comment">
-            <MessageCircle className="h-7 w-7 stroke-[1.8]" />
-          </Link>
+          <Button variant="ghost" size="icon" onClick={() => setViewerOpen(true)} className="h-9 w-9 active:scale-90" aria-label="Comment"><MessageCircle className="!h-5 !w-5 stroke-[1.8]" /></Button>
         ) : me && me.id !== post.user_id ? (
-          <Link to="/messages/$userId" params={{ userId: post.user_id }} className="transition-transform active:scale-90" aria-label="Send private message">
-            <Send className="h-7 w-7 stroke-[1.8]" />
+          <Link to="/messages/$userId" params={{ userId: post.user_id }} className="grid h-9 w-9 place-items-center" aria-label="Send private message">
+            <Send className="h-5 w-5 stroke-[1.8]" />
           </Link>
         ) : (
-          <span className="text-muted-foreground/60"><MessageCircle className="h-7 w-7 stroke-[1.8]" /></span>
+          <span className="grid h-9 w-9 place-items-center text-muted-foreground/60"><MessageCircle className="h-5 w-5 stroke-[1.8]" /></span>
         )}
 
-        <button onClick={share} className="transition-transform active:scale-90" aria-label="Share">
-          <Send className="h-7 w-7 -rotate-6 stroke-[1.8]" />
-        </button>
-        <Button variant="ghost" size="icon" aria-label={saved ? "Remove saved post" : "Save post"} onClick={() => void toggleSaved()} className="ml-auto"><Bookmark className={`h-7 w-7 stroke-[1.8] ${saved ? "fill-primary text-primary" : ""}`} /></Button>
+        <Button variant="ghost" size="icon" onClick={() => void share()} className="h-9 w-9 active:scale-90" aria-label="Repost link" title="Repost link"><Repeat2 className="!h-5 !w-5 stroke-[1.8]" /></Button>
+        <Button variant="ghost" size="icon" onClick={() => void share()} className="h-9 w-9 active:scale-90" aria-label="Share"><Send className="!h-5 !w-5 -rotate-6 stroke-[1.8]" /></Button>
+        <Button variant="ghost" size="icon" aria-label={saved ? "Remove saved post" : "Save post"} onClick={() => void toggleSaved()} className="ml-auto h-9 w-9"><Bookmark className={`!h-5 !w-5 stroke-[1.8] ${saved ? "fill-primary text-primary" : ""}`} /></Button>
         <div className="hidden md:flex md:items-center md:gap-2">
           <button onClick={() => user ? toggleDislike.mutate() : toast.info("Sign in to react")} className="p-1" aria-label="Dislike">
             <ThumbsDown className={`h-5 w-5 ${dislikeState?.disliked ? "fill-current" : ""}`} />
@@ -384,7 +381,7 @@ export function PostCard({ post }: { post: FeedPost }) {
           <p className="mt-1 whitespace-pre-wrap break-words text-sm leading-snug"><Link to="/u/$username" params={{ username: post.author.username }} className="mr-1 font-semibold">{post.author.username}</Link>{post.caption}</p>
         )}
         {post.comments_enabled && (commentCount ?? 0) > 0 && (
-          <Link to="/p/$postId" params={{ postId: post.id }} className="mt-1 block text-sm text-muted-foreground">View all {commentCount} comments</Link>
+          <Button variant="link" onClick={() => setViewerOpen(true)} className="mt-1 h-auto p-0 text-sm text-muted-foreground">View all {commentCount} comments</Button>
         )}
       </div>
 

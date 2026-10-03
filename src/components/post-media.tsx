@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type MouseEvent } from "react";
-import { Volume2, VolumeX } from "lucide-react";
+import { Play, Volume2, VolumeX } from "lucide-react";
 import { useSignedUrl } from "@/hooks/use-signed-url";
 import { cn } from "@/lib/utils";
 
@@ -18,6 +18,7 @@ interface PostMediaProps {
   /** Fill the parent container instead of using an intrinsic aspect ratio. */
   fill?: boolean;
   objectFit?: "cover" | "contain";
+  tapToPause?: boolean;
 }
 
 export function PostMedia({
@@ -34,6 +35,7 @@ export function PostMedia({
   showMuteButton = true,
   fill = false,
   objectFit = "cover",
+  tapToPause = false,
 }: PostMediaProps) {
 
   const shellRef = useRef<HTMLDivElement | null>(null);
@@ -44,6 +46,7 @@ export function PostMedia({
   const { data: posterUrl } = useSignedUrl("media", thumbnailPath);
   const [loaded, setLoaded] = useState(false);
   const [muted, setMuted] = useState(initialMuted);
+  const [manuallyPaused, setManuallyPaused] = useState(false);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   // Clamp aspect ratio so very tall portraits don't dominate the feed (Facebook-style).
   const rawAr = width && height ? width / height : 4 / 5;
@@ -55,6 +58,7 @@ export function PostMedia({
     setMuted(initialMuted);
     setShouldLoadVideo(type !== "video");
     setIsInView(type !== "video");
+    setManuallyPaused(false);
   }, [path, type, initialMuted]);
 
   useEffect(() => {
@@ -88,14 +92,14 @@ export function PostMedia({
   }, [type, unloadOnExit]);
 
   useEffect(() => {
-    if (!autoplayOnView || type !== "video" || !url || !isInView) return;
+    if (!autoplayOnView || type !== "video" || !url || !isInView || manuallyPaused) return;
     const el = videoRef.current;
     if (!el) return;
     el.muted = muted;
     el.play().catch(() => {
       /* browser blocked */
     });
-  }, [autoplayOnView, isInView, muted, type, url]);
+  }, [autoplayOnView, isInView, muted, type, url, manuallyPaused]);
 
   useEffect(() => {
     if (type !== "video") return;
@@ -146,6 +150,13 @@ export function PostMedia({
         <>
           <video
             ref={videoRef}
+            onClick={tapToPause ? (e) => {
+              e.stopPropagation();
+              const video = videoRef.current;
+              if (!video) return;
+              if (video.paused) { setManuallyPaused(false); video.play().catch(() => {}); }
+              else { video.pause(); setManuallyPaused(true); }
+            } : undefined}
             src={shouldLoadVideo ? (url ?? undefined) : undefined}
             poster={posterUrl}
             muted={muted}
@@ -155,10 +166,11 @@ export function PostMedia({
             controls={!autoplayOnView}
             onLoadedData={() => setLoaded(true)}
             onCanPlay={() => {
-              if (autoplayOnView && isInView) videoRef.current?.play().catch(() => {});
+              if (autoplayOnView && isInView && !manuallyPaused) videoRef.current?.play().catch(() => {});
             }}
-            className={cn("h-full w-full transition-opacity duration-300", fitClass, hasRendered ? "opacity-100" : "opacity-0")}
+            className={cn("h-full w-full transition-opacity duration-300", tapToPause && "cursor-pointer", fitClass, hasRendered ? "opacity-100" : "opacity-0")}
           />
+          {tapToPause && manuallyPaused && <Play className="pointer-events-none absolute left-1/2 top-1/2 h-12 w-12 -translate-x-1/2 -translate-y-1/2 text-foreground drop-shadow-lg" fill="currentColor" aria-hidden="true" />}
 
           {!posterUrl && !loaded && <div className="pointer-events-none absolute inset-0 animate-pulse bg-muted" />}
           {autoplayOnView && showMuteButton && url && (

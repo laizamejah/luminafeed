@@ -7,8 +7,10 @@ import { useCurrentUser, useCurrentProfile, useKidStatus } from "@/hooks/use-cur
 import { PostMedia } from "@/components/post-media";
 import { AvatarImage } from "@/components/avatar-image";
 import { CommentsPanel } from "@/components/comments-panel";
-import { Heart, MessageCircle, Share2, Bookmark, MoreHorizontal, Music2, X } from "lucide-react";
+import { Heart, MessageCircle, Send, Repeat2, Bookmark, MoreHorizontal, Music2, X, ArrowLeft, SlidersHorizontal, Volume2, VolumeX } from "lucide-react";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 
 
@@ -74,9 +76,11 @@ function ReelsPage() {
 
   return (
     <div className="fixed inset-x-0 bottom-[calc(4rem+env(safe-area-inset-bottom))] top-[calc(3.5rem+env(safe-area-inset-top))] z-20 w-full max-w-full snap-y snap-mandatory overflow-x-hidden overflow-y-auto overscroll-contain bg-black md:bottom-0 md:top-0 lg:left-64">
-      {/* Reels title overlay */}
-      <div className="pointer-events-none sticky top-0 z-30 hidden h-0 items-center px-4 md:flex lg:left-64">
-        <span className="pointer-events-auto pt-4 text-2xl font-semibold tracking-tight text-white drop-shadow-lg">Reels</span>
+      <div className="pointer-events-none sticky top-0 z-30 flex h-0 items-start gap-4 px-4 pt-4 text-primary-foreground drop-shadow-lg">
+        <Link to="/feed" className="pointer-events-auto md:hidden" aria-label="Back to feed"><ArrowLeft className="h-6 w-6" /></Link>
+        <span className="text-xl font-semibold">Reels</span>
+        <span className="text-xl font-semibold opacity-60">Friends</span>
+        <Link to="/settings" className="pointer-events-auto ml-auto" aria-label="Reels preferences"><SlidersHorizontal className="h-6 w-6" /></Link>
       </div>
 
       {reels.map((r) => <ReelItem key={r.id} reel={r} />)}
@@ -91,6 +95,15 @@ function ReelItem({ reel }: { reel: Reel }) {
   
   const isOwn = user?.id === reel.user_id;
   const [commentsOpen, setCommentsOpen] = useState(false);
+  const [muted, setMuted] = useState(false);
+  const { data: saved = false } = useQuery({
+    queryKey: ["saved-post", user?.id, reel.id], enabled: !!user,
+    queryFn: async () => {
+      const { data, error } = await supabase.from("saved_posts").select("post_id").eq("post_id", reel.id).eq("user_id", user?.id ?? "").maybeSingle();
+      if (error) throw error;
+      return !!data;
+    },
+  });
 
 
   const { data: likeState } = useQuery({
@@ -173,8 +186,17 @@ function ReelItem({ reel }: { reel: Reel }) {
     }
   }
 
+  async function toggleSaved() {
+    if (!user) return toast.info("Sign in to save reels");
+    const result = saved
+      ? await supabase.from("saved_posts").delete().eq("post_id", reel.id).eq("user_id", user.id)
+      : await supabase.from("saved_posts").insert({ post_id: reel.id, user_id: user.id });
+    if (result.error) return toast.error(result.error.message);
+    qc.invalidateQueries({ queryKey: ["saved-post", user.id, reel.id] });
+  }
+
   return (
-    <div className="relative flex h-full w-full snap-start items-center justify-center overflow-hidden bg-black">
+    <div className="relative flex h-full w-full snap-start items-center justify-center overflow-hidden bg-primary">
       <div className="relative mx-auto h-full w-full max-w-[480px]">
         <PostMedia
           path={media.storage_path}
@@ -183,26 +205,30 @@ function ReelItem({ reel }: { reel: Reel }) {
           height={media.height}
           thumbnailPath={media.thumbnail_path}
           autoplayOnView
-          initialMuted={false}
+          initialMuted={muted}
           preload="auto"
           unloadOnExit={false}
           showMuteButton={false}
+          tapToPause
           fill
-          objectFit="contain"
+          objectFit="cover"
           className="h-full w-full"
         />
 
+        <Button variant="ghost" size="icon" onClick={() => setMuted((value) => !value)} aria-label={muted ? "Unmute reel" : "Mute reel"} className="absolute bottom-3 right-3 z-20 h-8 w-8 rounded-full bg-primary/50 text-primary-foreground hover:bg-primary/70">
+          {muted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+        </Button>
+
         {/* Right action rail — compact, bottom → centre */}
         <div
-          className="absolute right-2 z-20 flex flex-col items-center gap-3.5 text-white"
-          style={{ bottom: "calc(5.5rem + env(safe-area-inset-bottom))" }}
+          className="absolute right-2 bottom-20 z-20 flex flex-col items-center gap-3 text-primary-foreground drop-shadow-lg"
         >
           <RailButton
             label={compact(likeState?.count ?? 0)}
             onClick={() => (user ? toggleLike.mutate() : toast.info("Sign in to react"))}
             ariaLabel="Like reel"
           >
-            <Heart className={`h-5 w-5 ${likeState?.liked ? "fill-rose-500 text-rose-500" : ""}`} strokeWidth={1.8} />
+            <Heart className={`h-6 w-6 ${likeState?.liked ? "fill-destructive text-destructive" : ""}`} strokeWidth={1.8} />
           </RailButton>
 
           <RailButton
@@ -210,37 +236,25 @@ function ReelItem({ reel }: { reel: Reel }) {
             onClick={() => setCommentsOpen((o) => !o)}
             ariaLabel="Comment on reel"
           >
-            <MessageCircle className="h-5 w-5" strokeWidth={1.8} />
+            <MessageCircle className="h-6 w-6" strokeWidth={1.8} />
           </RailButton>
 
-          <RailButton label="Share" onClick={share} ariaLabel="Share reel">
-            <Share2 className="h-[18px] w-[18px]" strokeWidth={1.8} />
+          <RailButton label="" onClick={() => void share()} ariaLabel="Repost link">
+            <Repeat2 className="h-6 w-6" strokeWidth={1.8} />
           </RailButton>
-
-          <RailButton
-            label="Save"
-            onClick={async () => {
-              try {
-                await navigator.clipboard.writeText(`${window.location.origin}/p/${reel.id}`);
-                toast.success("Reel link saved to clipboard");
-              } catch {
-                toast.error("Could not save reel");
-              }
-            }}
-            ariaLabel="Save reel"
-          >
-            <Bookmark className="h-[18px] w-[18px]" strokeWidth={1.8} />
+          <RailButton label="" onClick={() => void share()} ariaLabel="Share reel">
+            <Send className="h-6 w-6" strokeWidth={1.8} />
           </RailButton>
-
-          <RailButton label="" onClick={share} ariaLabel="More options">
-            <MoreHorizontal className="h-[18px] w-[18px]" />
+          <RailButton label="" onClick={() => void toggleSaved()} ariaLabel={saved ? "Remove saved reel" : "Save reel"}>
+            <Bookmark className={`h-6 w-6 ${saved ? "fill-current" : ""}`} strokeWidth={1.8} />
           </RailButton>
+          <DropdownMenu><DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8 text-primary-foreground" aria-label="More reel options"><MoreHorizontal className="h-6 w-6" /></Button></DropdownMenuTrigger><DropdownMenuContent align="end"><DropdownMenuItem asChild><Link to="/p/$postId" params={{ postId: reel.id }}>View post</Link></DropdownMenuItem><DropdownMenuItem onSelect={() => void share()}>Share link</DropdownMenuItem></DropdownMenuContent></DropdownMenu>
         </div>
 
 
         {/* Bottom author block */}
         <div
-          className="pointer-events-none absolute inset-x-0 bottom-0 z-10 bg-gradient-to-t from-black/90 via-black/45 to-transparent px-3 pt-16 text-white"
+          className="pointer-events-none absolute inset-x-0 bottom-0 z-10 bg-gradient-to-t from-primary/90 via-primary/45 to-transparent px-3 pt-16 text-primary-foreground"
           style={{ paddingBottom: "calc(1rem + env(safe-area-inset-bottom))" }}
         >
           <div className="pointer-events-auto grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 pr-16">
@@ -255,17 +269,17 @@ function ReelItem({ reel }: { reel: Reel }) {
             {!isOwn && user && (
               <button
                 onClick={() => toggleFollow.mutate()}
-                className="shrink-0 rounded-full border border-white/70 px-4 py-1.5 text-sm font-medium text-white transition-colors hover:bg-white/15"
+                className="shrink-0 rounded-full border border-primary-foreground/70 px-4 py-1.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-foreground/15"
               >
                 {isFollowing ? "Following" : "Follow"}
               </button>
             )}
           </div>
           {reel.caption && (
-            <p className="pointer-events-auto mt-2 line-clamp-2 whitespace-pre-wrap pr-16 text-sm text-white/95">{reel.caption}</p>
+            <p className="pointer-events-auto mt-2 line-clamp-2 whitespace-pre-wrap pr-16 text-sm text-primary-foreground/95">{reel.caption}</p>
           )}
           {(reel.audio_title || reel.audio_artist) && (
-            <span className="pointer-events-auto mt-2 flex items-center gap-1 truncate pr-16 text-xs text-white/80">
+            <span className="pointer-events-auto mt-2 flex items-center gap-1 truncate pr-16 text-xs text-primary-foreground/80">
               <Music2 className="h-3 w-3 shrink-0" />
               {[reel.audio_title, reel.audio_artist].filter(Boolean).join(" · ")}
             </span>
@@ -306,12 +320,12 @@ function RailButton({
   ariaLabel: string;
 }) {
   return (
-    <button onClick={onClick} aria-label={ariaLabel} className="flex flex-col items-center gap-1">
-      <span className="grid h-9 w-9 place-items-center rounded-full bg-white/10 backdrop-blur-md transition-colors active:bg-white/20">
+    <Button variant="ghost" onClick={onClick} aria-label={ariaLabel} className="flex h-12 w-11 flex-col items-center gap-0.5 p-0 text-primary-foreground hover:bg-transparent hover:text-primary-foreground active:scale-90">
+      <span className="grid h-8 w-8 place-items-center">
         {children}
       </span>
       {label && <span className="text-[10px] font-semibold">{label}</span>}
-    </button>
+    </Button>
   );
 
 }

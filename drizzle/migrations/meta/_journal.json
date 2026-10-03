@@ -15,6 +15,13 @@
       "when": 1790833880868,
       "tag": "0001_post_owner_actions_and_extended_profile",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1791007454287,
+      "tag": "0002_allow_media_only_comments",
+      "breakpoints": true
     }
   ]
 }

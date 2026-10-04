@@ -7,7 +7,8 @@ import { useCurrentUser, useCurrentProfile, useKidStatus } from "@/hooks/use-cur
 import { PostMedia } from "@/components/post-media";
 import { AvatarImage } from "@/components/avatar-image";
 import { CommentsPanel } from "@/components/comments-panel";
-import { Heart, MessageCircle, Send, Repeat2, Bookmark, MoreHorizontal, Music2, X, ArrowLeft, SlidersHorizontal, Volume2, VolumeX } from "lucide-react";
+import { Heart, MessageCircle, Send, Repeat2, Bookmark, MoreHorizontal, Music2, X, ArrowLeft, SlidersHorizontal, Volume2, VolumeX, Download } from "lucide-react";
+import { downloadMedia } from "@/lib/download-media";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -24,6 +25,8 @@ interface Reel {
   user_id: string;
   audio_title?: string | null;
   audio_artist?: string | null;
+  allow_downloads?: boolean;
+  allow_reposts?: boolean;
   author: { id: string; username: string; display_name: string | null; avatar_url: string | null };
   media: { storage_path: string; media_type: "image" | "video"; width: number | null; height: number | null; thumbnail_path: string | null; position: number }[];
 }
@@ -45,7 +48,7 @@ function ReelsPage() {
     queryFn: async () => {
       let q = supabase
         .from("posts")
-        .select(`id, caption, user_id, audio_title, audio_artist,
+        .select(`id, caption, user_id, audio_title, audio_artist, allow_downloads, allow_reposts,
           author:profiles!posts_user_id_fkey (id, username, display_name, avatar_url),
           media:post_media!inner (storage_path, media_type, width, height, thumbnail_path, position)`)
         .eq("is_reel", true)
@@ -75,8 +78,8 @@ function ReelsPage() {
   );
 
   return (
-    <div className="fixed inset-x-0 bottom-[calc(4rem+env(safe-area-inset-bottom))] top-[calc(3.5rem+env(safe-area-inset-top))] z-20 w-full max-w-full snap-y snap-mandatory overflow-x-hidden overflow-y-auto overscroll-contain bg-black md:bottom-0 md:top-0 lg:left-64">
-      <div className="pointer-events-none sticky top-0 z-30 flex h-0 items-start gap-4 px-4 pt-4 text-primary-foreground drop-shadow-lg">
+    <div className="fixed inset-x-0 bottom-[calc(4rem+env(safe-area-inset-bottom))] top-0 z-[45] w-full max-w-full snap-y snap-mandatory overflow-x-hidden overflow-y-auto overscroll-contain bg-black [scrollbar-width:none] md:bottom-0 lg:left-64">
+      <div className="pointer-events-none sticky top-0 z-30 flex h-0 items-start gap-4 px-4 text-primary-foreground drop-shadow-lg" style={{ paddingTop: "calc(1rem + env(safe-area-inset-top))" }}>
         <Link to="/feed" className="pointer-events-auto md:hidden" aria-label="Back to feed"><ArrowLeft className="h-6 w-6" /></Link>
         <span className="text-xl font-semibold">Reels</span>
         <span className="text-xl font-semibold opacity-60">Friends</span>
@@ -197,7 +200,7 @@ function ReelItem({ reel }: { reel: Reel }) {
 
   return (
     <div className="relative flex h-full w-full snap-start items-center justify-center overflow-hidden bg-primary">
-      <div className="relative mx-auto h-full w-full max-w-[480px]">
+      <div className="relative mx-auto h-full w-full md:max-w-[480px]">
         <PostMedia
           path={media.storage_path}
           type="video"
@@ -239,12 +242,19 @@ function ReelItem({ reel }: { reel: Reel }) {
             <MessageCircle className="h-6 w-6" strokeWidth={1.8} />
           </RailButton>
 
-          <RailButton label="" onClick={() => void share()} ariaLabel="Repost link">
-            <Repeat2 className="h-6 w-6" strokeWidth={1.8} />
-          </RailButton>
+          {(reel.allow_reposts ?? true) && (
+            <RailButton label="" onClick={() => void share()} ariaLabel="Repost link">
+              <Repeat2 className="h-6 w-6" strokeWidth={1.8} />
+            </RailButton>
+          )}
           <RailButton label="" onClick={() => void share()} ariaLabel="Share reel">
             <Send className="h-6 w-6" strokeWidth={1.8} />
           </RailButton>
+          {(isOwn || (reel.allow_downloads ?? true)) && (
+            <RailButton label="" onClick={() => void downloadMedia(media.storage_path, `lumina-${reel.author.username}-${reel.id.slice(0, 8)}`)} ariaLabel="Download reel">
+              <Download className="h-6 w-6" strokeWidth={1.8} />
+            </RailButton>
+          )}
           <RailButton label="" onClick={() => void toggleSaved()} ariaLabel={saved ? "Remove saved reel" : "Save reel"}>
             <Bookmark className={`h-6 w-6 ${saved ? "fill-current" : ""}`} strokeWidth={1.8} />
           </RailButton>

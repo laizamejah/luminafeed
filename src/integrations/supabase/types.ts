@@ -713,6 +713,8 @@ export type Database = {
       }
       posts: {
         Row: {
+          allow_downloads: boolean
+          allow_reposts: boolean
           archived_at: string | null
           audio_artist: string | null
           audio_artwork_url: string | null
@@ -731,6 +733,8 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          allow_downloads?: boolean
+          allow_reposts?: boolean
           archived_at?: string | null
           audio_artist?: string | null
           audio_artwork_url?: string | null
@@ -749,6 +753,8 @@ export type Database = {
           user_id: string
         }
         Update: {
+          allow_downloads?: boolean
+          allow_reposts?: boolean
           archived_at?: string | null
           audio_artist?: string | null
           audio_artwork_url?: string | null

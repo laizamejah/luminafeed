@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
-import { Heart, MessageCircle, Send, Repeat2, MapPin, ThumbsDown, Music, Play, Pause, X, Aperture, Bookmark, MoreHorizontal, Pin, Pencil, Lock, Archive, Trash2, Bell, BellOff, Images } from "lucide-react";
+import { Heart, MessageCircle, Send, Repeat2, MapPin, ThumbsDown, Music, Play, Pause, X, Aperture, Bookmark, MoreHorizontal, Pin, Pencil, Lock, Archive, Trash2, Bell, BellOff, Images, Download } from "lucide-react";
+import { downloadMedia } from "@/lib/download-media";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -29,6 +30,8 @@ export interface FeedPost {
   longitude: number | null;
   location_name: string | null;
   comments_enabled: boolean;
+  allow_downloads?: boolean;
+  allow_reposts?: boolean;
   is_reel: boolean;
   user_id: string;
   audio_preview_url: string | null;
@@ -364,8 +367,19 @@ export function PostCard({ post }: { post: FeedPost }) {
           <span className="grid h-9 w-9 place-items-center text-muted-foreground/60"><MessageCircle className="h-5 w-5 stroke-[1.8]" /></span>
         )}
 
-        <Button variant="ghost" size="icon" onClick={() => void share()} className="h-9 w-9 active:scale-90" aria-label="Repost link" title="Repost link"><Repeat2 className="!h-5 !w-5 stroke-[1.8]" /></Button>
+        {(post.allow_reposts ?? true) && (
+          <Button variant="ghost" size="icon" onClick={() => void share()} className="h-9 w-9 active:scale-90" aria-label="Repost link" title="Repost link"><Repeat2 className="!h-5 !w-5 stroke-[1.8]" /></Button>
+        )}
         <Button variant="ghost" size="icon" onClick={() => void share()} className="h-9 w-9 active:scale-90" aria-label="Share"><Send className="!h-5 !w-5 -rotate-6 stroke-[1.8]" /></Button>
+        {(isOwnPost || (post.allow_downloads ?? true)) && post.media?.length > 0 && (
+          <Button
+            variant="ghost" size="icon" className="h-9 w-9 active:scale-90" aria-label="Download"
+            onClick={() => {
+              const m = [...post.media].sort((a, b) => a.position - b.position)[idx] ?? post.media[0];
+              void downloadMedia(m.storage_path, `lumina-${post.author.username}-${post.id.slice(0, 8)}`);
+            }}
+          ><Download className="!h-5 !w-5 stroke-[1.8]" /></Button>
+        )}
         <Button variant="ghost" size="icon" aria-label={saved ? "Remove saved post" : "Save post"} onClick={() => void toggleSaved()} className="ml-auto h-9 w-9"><Bookmark className={`!h-5 !w-5 stroke-[1.8] ${saved ? "fill-primary text-primary" : ""}`} /></Button>
         <div className="hidden md:flex md:items-center md:gap-2">
           <button onClick={() => user ? toggleDislike.mutate() : toast.info("Sign in to react")} className="p-1" aria-label="Dislike">

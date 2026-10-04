@@ -32,6 +32,8 @@ function FeedPage() {
   const { data: posts, isLoading } = useQuery({
     queryKey: ["feed", user?.id ?? null, hideReels, kidOnly, scope],
     queryFn: () => fetchFeed(user?.id ?? null, hideReels, kidOnly, scope),
+    staleTime: 30_000,
+    placeholderData: (prev) => prev,
   });
 
   const qc = useQueryClient();

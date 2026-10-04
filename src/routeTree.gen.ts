@@ -18,6 +18,7 @@ import { Route as PPostIdRouteImport } from './routes/p.$postId'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedSearchRouteImport } from './routes/_authenticated/search'
 import { Route as AuthenticatedReelsRouteImport } from './routes/_authenticated/reels'
+import { Route as AuthenticatedPeopleRouteImport } from './routes/_authenticated/people'
 import { Route as AuthenticatedNotificationsRouteImport } from './routes/_authenticated/notifications'
 import { Route as AuthenticatedMessagesRouteImport } from './routes/_authenticated/messages'
 import { Route as AuthenticatedMeRouteImport } from './routes/_authenticated/me'
@@ -78,6 +79,11 @@ const AuthenticatedSearchRoute = AuthenticatedSearchRouteImport.update({
 const AuthenticatedReelsRoute = AuthenticatedReelsRouteImport.update({
   id: '/reels',
   path: '/reels',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedPeopleRoute = AuthenticatedPeopleRouteImport.update({
+  id: '/people',
+  path: '/people',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedNotificationsRoute =
@@ -187,6 +193,7 @@ export interface FileRoutesByFullPath {
   '/me': typeof AuthenticatedMeRoute
   '/messages': typeof AuthenticatedMessagesRouteWithChildren
   '/notifications': typeof AuthenticatedNotificationsRouteWithChildren
+  '/people': typeof AuthenticatedPeopleRoute
   '/reels': typeof AuthenticatedReelsRoute
   '/search': typeof AuthenticatedSearchRoute
   '/settings': typeof AuthenticatedSettingsRoute
@@ -213,6 +220,7 @@ export interface FileRoutesByTo {
   '/market': typeof AuthenticatedMarketRouteWithChildren
   '/me': typeof AuthenticatedMeRoute
   '/notifications': typeof AuthenticatedNotificationsRouteWithChildren
+  '/people': typeof AuthenticatedPeopleRoute
   '/reels': typeof AuthenticatedReelsRoute
   '/search': typeof AuthenticatedSearchRoute
   '/settings': typeof AuthenticatedSettingsRoute
@@ -242,6 +250,7 @@ export interface FileRoutesById {
   '/_authenticated/me': typeof AuthenticatedMeRoute
   '/_authenticated/messages': typeof AuthenticatedMessagesRouteWithChildren
   '/_authenticated/notifications': typeof AuthenticatedNotificationsRouteWithChildren
+  '/_authenticated/people': typeof AuthenticatedPeopleRoute
   '/_authenticated/reels': typeof AuthenticatedReelsRoute
   '/_authenticated/search': typeof AuthenticatedSearchRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
@@ -271,6 +280,7 @@ export interface FileRouteTypes {
     | '/me'
     | '/messages'
     | '/notifications'
+    | '/people'
     | '/reels'
     | '/search'
     | '/settings'
@@ -297,6 +307,7 @@ export interface FileRouteTypes {
     | '/market'
     | '/me'
     | '/notifications'
+    | '/people'
     | '/reels'
     | '/search'
     | '/settings'
@@ -325,6 +336,7 @@ export interface FileRouteTypes {
     | '/_authenticated/me'
     | '/_authenticated/messages'
     | '/_authenticated/notifications'
+    | '/_authenticated/people'
     | '/_authenticated/reels'
     | '/_authenticated/search'
     | '/_authenticated/settings'
@@ -411,6 +423,13 @@ declare module '@tanstack/react-router' {
       path: '/reels'
       fullPath: '/reels'
       preLoaderRoute: typeof AuthenticatedReelsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/people': {
+      id: '/_authenticated/people'
+      path: '/people'
+      fullPath: '/people'
+      preLoaderRoute: typeof AuthenticatedPeopleRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/notifications': {
@@ -588,6 +607,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedMeRoute: typeof AuthenticatedMeRoute
   AuthenticatedMessagesRoute: typeof AuthenticatedMessagesRouteWithChildren
   AuthenticatedNotificationsRoute: typeof AuthenticatedNotificationsRouteWithChildren
+  AuthenticatedPeopleRoute: typeof AuthenticatedPeopleRoute
   AuthenticatedReelsRoute: typeof AuthenticatedReelsRoute
   AuthenticatedSearchRoute: typeof AuthenticatedSearchRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
@@ -606,6 +626,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedMeRoute: AuthenticatedMeRoute,
   AuthenticatedMessagesRoute: AuthenticatedMessagesRouteWithChildren,
   AuthenticatedNotificationsRoute: AuthenticatedNotificationsRouteWithChildren,
+  AuthenticatedPeopleRoute: AuthenticatedPeopleRoute,
   AuthenticatedReelsRoute: AuthenticatedReelsRoute,
   AuthenticatedSearchRoute: AuthenticatedSearchRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,

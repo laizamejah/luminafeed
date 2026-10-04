@@ -99,6 +99,8 @@ function CreatePage() {
   const [location, setLocation] = useState("");
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [commentsEnabled, setCommentsEnabled] = useState(true);
+  const [allowDownloads, setAllowDownloads] = useState(true);
+  const [allowReposts, setAllowReposts] = useState(true);
   const [isReel, setIsReel] = useState(false);
   const [kidSafe, setKidSafe] = useState(false);
   const [track, setTrack] = useState<SpotifyTrack | null>(null);
@@ -156,6 +158,8 @@ function CreatePage() {
         longitude: coords?.lng ?? null,
         location_name: location || null,
         comments_enabled: commentsEnabled,
+        allow_downloads: allowDownloads,
+        allow_reposts: allowReposts,
         is_reel: isReel || drafts.some((d) => d.isVideo),
         kid_safe: kidSafe,
         audio_preview_url: track?.preview_url ?? null,
@@ -276,6 +280,22 @@ function CreatePage() {
             <div className="text-xs text-muted-foreground">When off, viewers can DM you privately instead.</div>
           </div>
           <Switch checked={commentsEnabled} onCheckedChange={setCommentsEnabled} />
+        </div>
+
+        <div className="flex items-center justify-between rounded-md border border-border p-4">
+          <div>
+            <div className="text-sm font-medium">Allow downloads</div>
+            <div className="text-xs text-muted-foreground">Others can save your photos and videos to their gallery.</div>
+          </div>
+          <Switch checked={allowDownloads} onCheckedChange={setAllowDownloads} />
+        </div>
+
+        <div className="flex items-center justify-between rounded-md border border-border p-4">
+          <div>
+            <div className="text-sm font-medium">Allow reposts</div>
+            <div className="text-xs text-muted-foreground">Others can repost this to their followers.</div>
+          </div>
+          <Switch checked={allowReposts} onCheckedChange={setAllowReposts} />
         </div>
 
         <div className="flex items-center justify-between rounded-md border border-border p-4">

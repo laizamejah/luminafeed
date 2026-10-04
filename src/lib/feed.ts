@@ -3,7 +3,7 @@ import type { FeedPost } from "@/components/post-card";
 
 const SELECT = `
   id, caption, created_at, archived_at, pinned_at, latitude, longitude, location_name,
-  comments_enabled, is_reel, user_id,
+  comments_enabled, allow_downloads, allow_reposts, is_reel, user_id,
   audio_preview_url, audio_title, audio_artist, audio_artwork_url,
   author:profiles!posts_user_id_fkey (id, username, display_name, avatar_url, show_metrics_publicly),
   media:post_media (id, storage_path, media_type, width, height, thumbnail_path, position, exif)

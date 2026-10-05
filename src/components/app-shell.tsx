@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Home, Play, Radio, PlusSquare, Music, User, Search, Bell, MessageCircle, Map, ShoppingBag, Baby, Settings as SettingsIcon, MoreVertical, Shield, Heart, Send, Plus, ChevronDown } from "lucide-react";
+import { Home, Play, Radio, PlusSquare, Music, User, Search, Bell, MessageCircle, Map, ShoppingBag, Baby, Settings as SettingsIcon, MoreVertical, Shield, Heart, Send, Plus, ChevronDown, Menu } from "lucide-react";
 import { Logo } from "./logo";
 import { cn } from "@/lib/utils";
 import type { ReactNode } from "react";
@@ -110,10 +110,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const { data: isAdmin } = useIsAdmin();
   const counts = useCounts();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
-  // Instagram-style chrome on every signed-in page
-  const isFeed = false;
   const isSettings = pathname === "/settings";
-
 
   const isActive = (to: string) => {
     if (to === "/me") return me ? pathname === `/u/${me.username}` : false;
@@ -144,8 +141,6 @@ export function AppShell({ children }: { children: ReactNode }) {
       </div>
     );
   }
-
-
 
   const sidebarContent = (
     <>
@@ -225,63 +220,46 @@ export function AppShell({ children }: { children: ReactNode }) {
       </aside>
 
       {/* Mobile top bar — liquid glass, truly fixed */}
-      {!isSettings && <header
-        className={cn(
-          "md:hidden fixed top-0 inset-x-0 z-40 flex items-center justify-between border-x-0 border-t-0 px-2",
-          isFeed ? "border-b border-border bg-background" : "liquid-glass",
-        )}
-        style={{ position: "fixed", paddingTop: "env(safe-area-inset-top)", height: "calc(3.75rem + env(safe-area-inset-top))" }}
-      >
-        {isFeed ? (
-          <>
-            <Link to="/create" aria-label="Create" className="grid h-11 w-11 place-items-center text-foreground">
-              <Plus className="h-8 w-8 stroke-[1.8]" />
+      {!isSettings && (
+        <header
+          className="md:hidden fixed top-0 inset-x-0 z-40 flex items-center justify-between border-b border-border bg-background/80 backdrop-blur-xl px-4"
+          style={{ position: "fixed", paddingTop: "env(safe-area-inset-top)", height: "calc(3.75rem + env(safe-area-inset-top))" }}
+        >
+          <div className="flex items-center gap-3">
+            <Sheet open={mobileNavOpen} onOpenChange={setMobileNavOpen}>
+              <SheetTrigger asChild>
+                <button aria-label="Open menu" className="p-1 -ml-1 text-foreground hover:bg-secondary/60 rounded-lg transition-colors">
+                  <Menu className="h-6 w-6" />
+                </button>
+              </SheetTrigger>
+              <SheetContent
+                side="left"
+                className="w-72 p-6 border-r border-border bg-background/95 backdrop-blur-xl flex flex-col h-full overflow-hidden"
+              >
+                <SheetTitle className="sr-only">Navigation</SheetTitle>
+                {sidebarContent}
+              </SheetContent>
+            </Sheet>
+            <Link to="/feed" className="flex items-center gap-1">
+              <Logo className="text-2xl font-bold" />
             </Link>
-            <Link to="/feed" className="absolute left-1/2 flex -translate-x-1/2 items-center gap-1" aria-label="Lumina home">
-              <Logo className="text-[1.9rem] text-foreground" />
-              <ChevronDown className="mt-1 h-5 w-5" />
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Link to="/create" aria-label="Create" className="p-2 text-foreground hover:bg-secondary/60 rounded-lg">
+              <PlusSquare className="h-6 w-6" />
             </Link>
-            <Link to="/notifications" aria-label="Notifications" className="relative grid h-11 w-11 place-items-center text-foreground">
-              <Heart className="h-7 w-7 stroke-[1.8]" />
+            <Link to="/notifications" aria-label="Notifications" className="relative p-2 text-foreground hover:bg-secondary/60 rounded-lg">
+              <Heart className="h-6 w-6" />
               <Badge count={counts.notifications} />
             </Link>
-          </>
-        ) : (
-        <>
-        <div className="flex items-center gap-1">
-          <Sheet open={mobileNavOpen} onOpenChange={setMobileNavOpen}>
-            <SheetTrigger asChild>
-              <button aria-label="Open menu" className="p-2 text-muted-foreground hover:text-foreground">
-                <MoreVertical className="h-5 w-5" />
-              </button>
-            </SheetTrigger>
-            <SheetContent
-              side="left"
-              className="w-72 p-6 border-r border-white/10 bg-background/95 backdrop-blur-xl flex flex-col h-full overflow-hidden"
-            >
-              <SheetTitle className="sr-only">Navigation</SheetTitle>
-              {sidebarContent}
-            </SheetContent>
-          </Sheet>
-          <Link to="/feed"><Logo /></Link>
-        </div>
-        <div className="flex items-center gap-1">
-          <Link to="/search" aria-label="Search" className="p-2 text-muted-foreground hover:text-foreground">
-            <Search className="h-5 w-5" />
-          </Link>
-          <Link to="/messages" aria-label="Messages" className="relative p-2 text-muted-foreground hover:text-foreground">
-            <MessageCircle className="h-5 w-5" />
-            <Badge count={counts.messages} />
-          </Link>
-          <Link to="/notifications" aria-label="Notifications" className="relative p-2 text-muted-foreground hover:text-foreground">
-            <Bell className="h-5 w-5" />
-            <Badge count={counts.notifications} />
-          </Link>
-          <ThemeToggle />
-        </div>
-        </>
-        )}
-      </header>}
+            <Link to="/messages" aria-label="Messages" className="relative p-2 text-foreground hover:bg-secondary/60 rounded-lg">
+              <Send className="h-6 w-6" />
+              <Badge count={counts.messages} />
+            </Link>
+          </div>
+        </header>
+      )}
 
       <main className={cn("w-full max-w-full overflow-x-clip lg:pt-0", isSettings ? "pt-0" : "pt-14 md:pt-14")}>
         {children}
@@ -289,44 +267,30 @@ export function AppShell({ children }: { children: ReactNode }) {
 
       {/* Mobile bottom bar — liquid glass, safe-area aware */}
       {!isSettings && <nav
-        className="md:hidden fixed bottom-0 inset-x-0 z-40 liquid-glass border-x-0 border-b-0"
+        className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-background/80 backdrop-blur-xl border-t border-border"
         style={{ position: "fixed", paddingBottom: "env(safe-area-inset-bottom)" }}
       >
-
-        <div className={cn("mx-auto grid max-w-lg items-center", isFeed ? "grid-cols-5" : "grid-cols-6")}>
-          {(isFeed ? feedBottomNav : mobileBottomNav).map((item) => {
+        <div className="mx-auto grid max-w-lg items-center grid-cols-5 h-16">
+          {[
+            { to: "/feed" as const, label: "Home", icon: Home },
+            { to: "/reels" as const, label: "Reels", icon: Play },
+            { to: "/discover" as const, label: "Map", icon: Map },
+            { to: "/search" as const, label: "Search", icon: Search },
+            { to: "/me" as const, label: "Profile", icon: User },
+          ].map((item) => {
             const active = isActive(item.to);
             const Icon = item.icon;
-            if ("prominent" in item && item.prominent) {
-              return (
-                <Link
-                  key={item.to}
-                  to={item.to}
-                  className="flex flex-col items-center justify-center py-2"
-                  aria-label={item.label}
-                >
-                  <span className="grid h-11 w-11 place-items-center rounded-2xl bg-primary text-primary-foreground shadow-lg shadow-primary/30 glass-prominent">
-                    <Icon className="h-5 w-5" />
-                  </span>
-                </Link>
-              );
-            }
             return (
               <Link
                 key={item.to}
                 to={item.to}
                 className={cn(
-                  "relative flex flex-col items-center justify-center",
-                  isFeed ? "h-16 py-2 text-foreground" : "gap-1 py-3 text-[10px]",
-                  !isFeed && (active ? "text-foreground" : "text-muted-foreground"),
+                  "relative flex flex-col items-center justify-center h-full transition-colors",
+                  active ? "text-primary" : "text-muted-foreground hover:text-foreground"
                 )}
                 aria-label={item.label}
               >
-                <span className="relative">
-                  <Icon className={cn(isFeed ? "h-7 w-7 stroke-[1.8]" : "h-5 w-5", active && item.to === "/feed" && "fill-current")} />
-                  {"badgeKey" in item && <Badge count={badgeFor(item.badgeKey)} />}
-                </span>
-                {!isFeed && <span>{item.label}</span>}
+                <Icon className={cn("h-6 w-6", active && "fill-current")} />
               </Link>
             );
           })}

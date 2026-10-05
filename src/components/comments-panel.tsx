@@ -9,7 +9,7 @@ import { Button } from "./ui/button";
 import { Textarea } from "./ui/textarea";
 import { formatDistanceToNow } from "date-fns";
 import { toast } from "sonner";
-import { ImagePlus, Smile, Sticker, X, Loader2 } from "lucide-react";
+import { Heart, ImagePlus, Smile, Sticker, X, Loader2 } from "lucide-react";
 
 const EMOJIS = ["😀","😂","🥰","😍","😎","🤩","😭","😡","👍","👏","🙏","🔥","💯","🎉","❤️","💔","✨","😅","🤔","😴","🥳","😇","🤝","👀"];
 const STICKERS = ["🐣","🐳","🦄","🌈","🍕","🌻","🚀","🎸","🏆","💎","🌙","☕️","🐶","🐱","🍿","⚡️"];
@@ -21,6 +21,9 @@ export interface CommentRow {
   media_kind: string | null;
   created_at: string;
   user_id: string;
+  parent_id: string | null;
+  like_count: number;
+  liked_by_me: boolean;
   author: { username: string; display_name: string | null; avatar_url: string | null };
 }
 
@@ -50,6 +53,7 @@ export function CommentsPanel({
   const [picker, setPicker] = useState<"emoji" | "sticker" | null>(null);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [pendingSticker, setPendingSticker] = useState<string | null>(null);
+  const [replyingTo, setReplyingTo] = useState<CommentRow | null>(null);
   const fileRef = useRef<HTMLInputElement | null>(null);
 
   const { data: comments = [], isLoading } = useQuery({
@@ -57,11 +61,22 @@ export function CommentsPanel({
     queryFn: async () => {
       const { data, error } = await supabase
         .from("comments")
-        .select("id, content, media_url, media_kind, created_at, user_id, author:profiles!comments_user_id_fkey (username, display_name, avatar_url)")
+        .select("id, content, media_url, media_kind, created_at, user_id, parent_id, author:profiles!comments_user_id_fkey (username, display_name, avatar_url)")
         .eq("post_id", postId)
         .order("created_at", { ascending: true });
       if (error) throw error;
-      return (data ?? []) as unknown as CommentRow[];
+      const rows = (data ?? []) as unknown as Omit<CommentRow, "like_count" | "liked_by_me">[];
+      if (rows.length === 0) return [] as CommentRow[];
+      const { data: likes, error: likesError } = await supabase
+        .from("comment_likes")
+        .select("comment_id, user_id")
+        .in("comment_id", rows.map((row) => row.id));
+      if (likesError) throw likesError;
+      return rows.map((row) => ({
+        ...row,
+        like_count: (likes ?? []).filter((like) => like.comment_id === row.id).length,
+        liked_by_me: !!user && (likes ?? []).some((like) => like.comment_id === row.id && like.user_id === user.id),
+      }));
     },
   });
 
@@ -88,7 +103,7 @@ export function CommentsPanel({
 
       const { data: inserted, error } = await supabase
         .from("comments")
-        .insert({ post_id: postId, user_id: user.id, content: trimmed, media_url: mediaUrl, media_kind: mediaKind })
+        .insert({ post_id: postId, user_id: user.id, parent_id: replyingTo?.parent_id ?? replyingTo?.id ?? null, content: trimmed, media_url: mediaUrl, media_kind: mediaKind })
         .select("id")
         .maybeSingle();
       if (error) throw error;
@@ -98,8 +113,8 @@ export function CommentsPanel({
           await supabase.from("notifications").insert({
             user_id: postOwnerId,
             actor_id: user.id,
-            type: "comment",
-            data: { post_id: postId, comment_id: inserted?.id, text: trimmed.slice(0, 200) },
+            type: replyingTo ? "comment_reply" : "comment",
+            data: { post_id: postId, comment_id: inserted?.id, parent_id: replyingTo?.id, text: trimmed.slice(0, 200) },
           });
         } catch { /* ignore */ }
       }
@@ -109,6 +124,7 @@ export function CommentsPanel({
       setPendingFile(null);
       setPendingSticker(null);
       setPicker(null);
+      setReplyingTo(null);
       qc.invalidateQueries({ queryKey: ["comments", postId] });
       qc.invalidateQueries({ queryKey: ["comments-count", postId] });
       qc.invalidateQueries({ queryKey: ["reel-comments", postId] });
@@ -116,37 +132,69 @@ export function CommentsPanel({
     onError: (e) => toast.error(e instanceof Error ? e.message : "Could not comment"),
   });
 
+  const toggleCommentLike = useMutation({
+    mutationFn: async (comment: CommentRow) => {
+      if (!user) throw new Error("Sign in to like comments");
+      const result = comment.liked_by_me
+        ? await supabase.from("comment_likes").delete().eq("comment_id", comment.id).eq("user_id", user.id)
+        : await supabase.from("comment_likes").insert({ comment_id: comment.id, user_id: user.id });
+      if (result.error) throw result.error;
+      if (!comment.liked_by_me && comment.user_id !== user.id) {
+        await supabase.from("notifications").insert({ user_id: comment.user_id, actor_id: user.id, type: "comment_like", data: { post_id: postId, comment_id: comment.id } });
+      }
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["comments", postId] }),
+    onError: (e) => toast.error(e instanceof Error ? e.message : "Could not like comment"),
+  });
+
+  const parents = comments.filter((comment) => !comment.parent_id);
+  const repliesFor = (parentId: string) => comments.filter((comment) => comment.parent_id === parentId);
+
+  function renderComment(c: CommentRow, isReply = false) {
+    return (
+      <div key={c.id} className={`flex gap-2.5 ${isReply ? "ml-9 border-l border-border pl-3" : ""}`}>
+        <Link to="/u/$username" params={{ username: c.author.username }} onClick={onNavigate} className="shrink-0">
+          <AvatarImage path={c.author.avatar_url} name={c.author.display_name ?? c.author.username} size={isReply ? 24 : 30} />
+        </Link>
+        <div className="min-w-0 flex-1 text-sm">
+          <div className="rounded-2xl bg-secondary/70 px-3 py-2">
+            <Link to="/u/$username" params={{ username: c.author.username }} onClick={onNavigate} className="mr-2 font-semibold hover:underline">{c.author.username}</Link>
+            {c.content && <span className="break-words">{c.content}</span>}
+            {c.media_url && <CommentMedia url={c.media_url} kind={c.media_kind} />}
+          </div>
+          <div className="mt-1 flex items-center gap-3 px-2 text-[11px] text-muted-foreground">
+            <span>{formatDistanceToNow(new Date(c.created_at), { addSuffix: true })}</span>
+            <Button type="button" variant="link" className="h-auto p-0 text-[11px] font-semibold text-muted-foreground" onClick={() => setReplyingTo(c)}>Reply</Button>
+          </div>
+        </div>
+        <Button type="button" variant="ghost" size="icon" onClick={() => toggleCommentLike.mutate(c)} className="mt-1 h-9 w-9 shrink-0" aria-label={c.liked_by_me ? "Unlike comment" : "Like comment"}>
+          <span className="flex flex-col items-center"><Heart className={`h-4 w-4 ${c.liked_by_me ? "fill-destructive text-destructive" : ""}`} />{c.like_count > 0 && <span className="text-[9px] tabular-nums">{c.like_count}</span>}</span>
+        </Button>
+      </div>
+    );
+  }
+
   return (
     <div className={`flex min-h-0 flex-1 flex-col ${className}`}>
       <div className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-4 py-3">
         {isLoading && <p className="text-sm text-muted-foreground">Loading comments…</p>}
         {!isLoading && comments.length === 0 && <p className="text-sm text-muted-foreground">Be the first to comment.</p>}
-        {comments.map((c) => (
-          <div key={c.id} className="flex gap-2.5">
-            <Link to="/u/$username" params={{ username: c.author.username }} onClick={onNavigate} className="shrink-0">
-              <AvatarImage path={c.author.avatar_url} name={c.author.display_name ?? c.author.username} size={28} />
-            </Link>
-            <div className="min-w-0 flex-1 text-sm">
-              <Link
-                to="/u/$username"
-                params={{ username: c.author.username }}
-                onClick={onNavigate}
-                className="mr-2 font-medium hover:underline"
-              >
-                {c.author.username}
-              </Link>
-              {c.content && <span className="break-words">{c.content}</span>}
-              {c.media_url && <CommentMedia url={c.media_url} kind={c.media_kind} />}
-              <div className="mt-0.5 text-[11px] text-muted-foreground">
-                {formatDistanceToNow(new Date(c.created_at), { addSuffix: true })}
-              </div>
-            </div>
+        {parents.map((comment) => (
+          <div key={comment.id} className="space-y-3">
+            {renderComment(comment)}
+            {repliesFor(comment.id).map((reply) => renderComment(reply, true))}
           </div>
         ))}
       </div>
 
       {user ? (
         <div className="border-t border-border px-3 py-2">
+          {replyingTo && (
+            <div className="mb-2 flex items-center rounded-lg bg-secondary/60 px-3 py-2 text-xs text-muted-foreground">
+              Replying to <span className="ml-1 font-semibold text-foreground">@{replyingTo.author.username}</span>
+              <Button type="button" variant="ghost" size="icon" onClick={() => setReplyingTo(null)} className="ml-auto h-6 w-6" aria-label="Cancel reply"><X className="h-3.5 w-3.5" /></Button>
+            </div>
+          )}
           {(pendingFile || pendingSticker) && (
             <div className="mb-2 flex items-center gap-2 rounded-lg bg-secondary/60 px-2 py-1.5 text-xs">
               {pendingSticker ? <span className="text-2xl">{pendingSticker}</span> : <span className="truncate">{pendingFile?.name}</span>}
@@ -208,7 +256,7 @@ export function CommentsPanel({
                   addComment.mutate();
                 }
               }}
-              placeholder="Add a comment…"
+              placeholder={replyingTo ? `Reply to @${replyingTo.author.username}…` : "Join the conversation…"}
               className="min-h-9 resize-none"
               maxLength={2000}
             />

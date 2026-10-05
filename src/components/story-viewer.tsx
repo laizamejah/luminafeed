@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { useSignedUrl } from "@/hooks/use-signed-url";
-import { X, ChevronLeft, ChevronRight, Heart, Play, Pause } from "lucide-react";
+import { X, ChevronLeft, ChevronRight, Heart, Play, Pause, Music } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { toast } from "sonner";
 import { AvatarImage } from "./avatar-image";
@@ -60,18 +60,35 @@ export function StoryViewer({ groups, startIndex, onClose, onViewed }: { groups:
       else setProgress(p);
     }, 50);
     return () => clearInterval(t);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [item?.id]);
 
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
+    
+    // Reset state
     audio.pause();
     audio.currentTime = 0;
     setPlaying(false);
+    
     if (!item?.audio_preview_url) return;
-    // user tapped to open viewer, so autoplay is allowed
-    audio.play().then(() => setPlaying(true)).catch(() => setPlaying(false));
+
+    // Explicitly load and play to handle browser policies more reliably
+    audio.src = item.audio_preview_url;
+    audio.load();
+    
+    const playPromise = audio.play();
+    if (playPromise !== undefined) {
+      playPromise
+        .then(() => {
+          setPlaying(true);
+        })
+        .catch((error) => {
+          console.error("Autoplay prevented:", error);
+          setPlaying(false);
+          // Don't toast here to avoid annoying the user if they're just scrolling through
+        });
+    }
   }, [item?.audio_preview_url, item?.id]);
 
   function next() {
@@ -139,7 +156,7 @@ export function StoryViewer({ groups, startIndex, onClose, onViewed }: { groups:
               {item.audio_artwork_url ? (
                 <img src={item.audio_artwork_url} alt={item.audio_title ?? "Audio artwork"} className="h-12 w-12 rounded-lg object-cover" />
               ) : (
-                <div className="grid h-12 w-12 place-items-center rounded-lg bg-white/10 text-white"><Play className="h-5 w-5" /></div>
+                <div className="grid h-12 w-12 place-items-center rounded-lg bg-white/10 text-white"><Music className="h-5 w-5" /></div>
               )}
               <div className="flex-1 min-w-0 text-xs">
                 <div className="truncate font-medium">{item.audio_title ?? "Audio clip"}</div>
@@ -147,7 +164,8 @@ export function StoryViewer({ groups, startIndex, onClose, onViewed }: { groups:
               </div>
               <button
                 type="button"
-                onClick={() => {
+                onClick={(e) => {
+                  e.stopPropagation();
                   if (!audioRef.current) return;
                   if (playing) { audioRef.current.pause(); setPlaying(false); }
                   else { audioRef.current.play().then(() => setPlaying(true)).catch(() => {}); }
@@ -158,7 +176,7 @@ export function StoryViewer({ groups, startIndex, onClose, onViewed }: { groups:
                 {playing ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
               </button>
             </div>
-            <audio ref={audioRef} src={item.audio_preview_url} loop preload="auto" autoPlay onEnded={() => setPlaying(false)} className="hidden" />
+            <audio ref={audioRef} loop preload="auto" onEnded={() => setPlaying(false)} className="hidden" />
           </div>
         )}
 
@@ -184,7 +202,6 @@ export function StoryViewer({ groups, startIndex, onClose, onViewed }: { groups:
                       }
                     } else {
                       toast.success(`Reacted ${emoji}`);
-                      // notify story owner (don't notify self)
                       try {
                         if (group.user_id !== user.id) {
                           await supabase.from("notifications").insert({ user_id: group.user_id, actor_id: user.id, type: "story_reaction", data: { story_id: item.id, reaction_id: data?.id, emoji } });

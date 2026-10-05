@@ -1,3 +1,6 @@
 - [ ] Owner post actions: edit, pin, save, archive/restore, delete and notification toggle.
 - [ ] Expanded editable profile with private birth date and working photo controls.
 - [ ] Facebook-style notifications with per-item read state and destinations.
+- [ ] Threaded comment replies and comment likes in posts and Reels.
+- [ ] Mobile hamburger navigation from the main feed.
+- [ ] Facebook-style music picker and reliable story music playback.

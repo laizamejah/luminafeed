@@ -111,7 +111,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const counts = useCounts();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   // Instagram-style chrome on every signed-in page
-  const isFeed = true;
+  const isFeed = false;
   const isSettings = pathname === "/settings";
 
 

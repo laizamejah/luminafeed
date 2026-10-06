@@ -31,12 +31,30 @@ export interface StoryGroup {
 
 const DURATION_MS = 5000;
 
+let sharedAudio: HTMLAudioElement | null = null;
+export function getStoryAudio(): HTMLAudioElement {
+  if (!sharedAudio) {
+    sharedAudio = new Audio();
+    sharedAudio.loop = true;
+    sharedAudio.preload = "auto";
+    sharedAudio.setAttribute("playsinline", "");
+  }
+  return sharedAudio;
+}
+/** Call inside the tap that opens a story so iOS allows audio playback. */
+export function primeStoryAudio(url?: string | null) {
+  const a = getStoryAudio();
+  if (url) a.src = url;
+  a.muted = false;
+  a.play().then(() => { if (!url) a.pause(); }).catch(() => {});
+}
+
 export function StoryViewer({ groups, startIndex, onClose, onViewed }: { groups: StoryGroup[]; startIndex: number; onClose: () => void; onViewed?: (storyId: string) => void }) {
   const [gIdx, setGIdx] = useState(startIndex);
   const [iIdx, setIIdx] = useState(0);
   const [progress, setProgress] = useState(0);
   const [playing, setPlaying] = useState(false);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(typeof window !== "undefined" ? getStoryAudio() : null);
   const { data: user } = useCurrentUser();
 
   const group = groups[gIdx];
@@ -67,15 +85,10 @@ export function StoryViewer({ groups, startIndex, onClose, onViewed }: { groups:
     if (!audio) return;
     
     // Reset state
-    audio.pause();
-    audio.currentTime = 0;
     setPlaying(false);
-    
-    if (!item?.audio_preview_url) return;
-
-    // Explicitly load and play to handle browser policies more reliably
-    audio.src = item.audio_preview_url;
-    audio.load();
+    if (!item?.audio_preview_url) { audio.pause(); return; }
+    if (audio.src !== item.audio_preview_url) { audio.src = item.audio_preview_url; }
+    audio.currentTime = 0;
     
     const playPromise = audio.play();
     if (playPromise !== undefined) {
@@ -90,6 +103,8 @@ export function StoryViewer({ groups, startIndex, onClose, onViewed }: { groups:
         });
     }
   }, [item?.audio_preview_url, item?.id]);
+
+  useEffect(() => () => { getStoryAudio().pause(); }, []);
 
   function next() {
     if (!group) return;
@@ -160,7 +175,7 @@ export function StoryViewer({ groups, startIndex, onClose, onViewed }: { groups:
               )}
               <div className="flex-1 min-w-0 text-xs">
                 <div className="truncate font-medium">{item.audio_title ?? "Audio clip"}</div>
-                <div className="truncate text-white/70">{item.audio_artist ?? "Spotify preview"}</div>
+                <div className="truncate text-white/70">{item.audio_artist ?? "Apple Music preview"}</div>
               </div>
               <button
                 type="button"
@@ -176,7 +191,6 @@ export function StoryViewer({ groups, startIndex, onClose, onViewed }: { groups:
                 {playing ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
               </button>
             </div>
-            <audio ref={audioRef} loop preload="auto" onEnded={() => setPlaying(false)} className="hidden" />
           </div>
         )}
 

@@ -215,14 +215,14 @@ export function AppShell({ children }: { children: ReactNode }) {
       }}
     >
       {/* Desktop sidebar */}
-      <aside className="hidden lg:flex fixed inset-y-0 left-0 z-30 w-64 flex-col liquid-glass px-6 py-6">
+      <aside className="hidden lg:flex fixed inset-y-0 left-0 z-30 w-64 flex-col liquid-glass px-6 py-6 overflow-y-auto" style={{ position: "fixed" }}>
         {sidebarContent}
       </aside>
 
       {/* Mobile top bar — liquid glass, truly fixed */}
       {!isSettings && (
         <header
-          className="md:hidden fixed top-0 inset-x-0 z-40 flex items-center justify-between border-b border-border bg-background/80 backdrop-blur-xl px-4"
+          className="lg:hidden fixed top-0 inset-x-0 z-40 flex items-center justify-between border-b border-border bg-background/80 backdrop-blur-xl px-4"
           style={{ position: "fixed", paddingTop: "env(safe-area-inset-top)", height: "calc(3.75rem + env(safe-area-inset-top))" }}
         >
           <div className="flex items-center gap-3">
@@ -261,13 +261,13 @@ export function AppShell({ children }: { children: ReactNode }) {
         </header>
       )}
 
-      <main className={cn("w-full max-w-full overflow-x-clip lg:pt-0", isSettings ? "pt-0" : "pt-14 md:pt-14")}>
+      <main className={cn("w-full max-w-full overflow-x-clip lg:pt-0", isSettings ? "pt-0" : "pt-14 lg:pt-0")}>
         {children}
       </main>
 
       {/* Mobile bottom bar — liquid glass, safe-area aware */}
       {!isSettings && <nav
-        className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-background/80 backdrop-blur-xl border-t border-border"
+        className="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-background/80 backdrop-blur-xl border-t border-border"
         style={{ position: "fixed", paddingBottom: "env(safe-area-inset-bottom)" }}
       >
         <div className="mx-auto grid max-w-lg items-center grid-cols-5 h-16">

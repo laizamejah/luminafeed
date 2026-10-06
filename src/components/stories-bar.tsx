@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useCurrentProfile, useCurrentUser } from "@/hooks/use-current-user";
 import { AvatarImage } from "./avatar-image";
 import { Plus } from "lucide-react";
-import { StoryViewer, type StoryGroup } from "./story-viewer";
+import { StoryViewer, primeStoryAudio, type StoryGroup } from "./story-viewer";
 import { CreateStoryDialog } from "./create-story-dialog";
 import { getSignedUrl } from "@/hooks/use-signed-url";
 
@@ -198,7 +198,7 @@ export function StoriesBar() {
         {groups.map((g, i) => {
           const viewed = g.items.length > 0 && g.items.every((item) => viewedIds.has(item.id));
           return (
-            <button key={g.user_id} onClick={() => setViewIndex(i)} className="flex w-[78px] shrink-0 flex-col items-center gap-1.5">
+            <button key={g.user_id} onClick={() => { primeStoryAudio(g.items[0]?.audio_preview_url); setViewIndex(i); }} className="flex w-[78px] shrink-0 flex-col items-center gap-1.5">
               <div className={viewed ? "rounded-full bg-border p-[3px]" : "story-ring rounded-full p-[3px]"}>
                 <div className="rounded-full bg-background p-[3px]">
                   <AvatarImage path={g.avatar_url} name={g.display_name ?? g.username} size={66} />

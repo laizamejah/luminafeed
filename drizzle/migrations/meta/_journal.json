@@ -43,6 +43,13 @@
       "when": 1791263782911,
       "tag": "0005_tighten_select_policies",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1791264191467,
+      "tag": "0006_tighten_albums_collabs",
+      "breakpoints": true
     }
   ]
 }

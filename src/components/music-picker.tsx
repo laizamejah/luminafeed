@@ -225,7 +225,7 @@ export function MusicPicker({ value, onChange }: Props) {
                       });
                     }}
                     className={cn(
-                      "absolute inset-0 flex items-center justify-center bg-black/40 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity",
+                      "absolute inset-0 flex items-center justify-center bg-black/40 rounded-lg transition-opacity",
                       previewId === t.id && "opacity-100"
                     )}
                   >

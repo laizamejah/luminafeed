@@ -42,7 +42,7 @@ interface ItunesTrack {
 async function fetchItunesPreviews(query: string): Promise<ItunesTrack[]> {
   try {
     const url = `https://itunes.apple.com/search?media=music&entity=song&limit=50&term=${encodeURIComponent(query)}`;
-    const res = await fetch(url);
+    const res = await fetch(url, { headers: { Accept: "application/json", "User-Agent": "Lumina/1.0" } });
     if (!res.ok) return [];
     const json = (await res.json()) as { results?: ItunesTrack[] };
     return json.results ?? [];
@@ -60,65 +60,16 @@ export const searchSpotify = createServerFn({ method: "POST" })
   .handler(async ({ data }): Promise<SpotifyTrack[]> => {
     const q = data.query.trim();
     if (!q) return [];
-    try {
-      const token = await getSpotifyToken();
-      const params = new URLSearchParams({ q, type: "track", market: "US" });
-      const [spotifyRes, itunesResults] = await Promise.all([
-        fetch(`https://api.spotify.com/v1/search?${params.toString()}`, { headers: { Authorization: `Bearer ${token}` } }),
-        fetchItunesPreviews(q),
-      ]);
-      if (!spotifyRes.ok) {
-        const text = await spotifyRes.text();
-        throw new Error(`Spotify search failed (${spotifyRes.status})${text ? `: ${text}` : ""}`);
-      }
-      const json = (await spotifyRes.json()) as {
-        tracks?: {
-          items?: Array<{
-            id: string;
-            name: string;
-            preview_url: string | null;
-            artists: Array<{ name: string }>;
-            album: { images: Array<{ url: string }> };
-          }>;
-        };
-      };
-
-      const itunesByKey = new Map<string, string>();
-      for (const it of itunesResults) {
-        if (!it.previewUrl) continue;
-        const key = `${normalize(it.trackName)}::${normalize(it.artistName)}`;
-        if (!itunesByKey.has(key)) itunesByKey.set(key, it.previewUrl);
-        const titleOnly = normalize(it.trackName);
-        if (!itunesByKey.has(titleOnly)) itunesByKey.set(titleOnly, it.previewUrl);
-      }
-
-      return (json.tracks?.items ?? []).map((t) => {
-        const firstArtist = t.artists[0]?.name ?? "";
-        const preview =
-          t.preview_url ??
-          itunesByKey.get(`${normalize(t.name)}::${normalize(firstArtist)}`) ??
-          itunesByKey.get(normalize(t.name)) ??
-          null;
-        return {
-          id: t.id,
-          title: t.name,
-          artist: t.artists.map((a) => a.name).join(", "),
-          artwork_url: t.album.images[t.album.images.length - 1]?.url ?? null,
-          preview_url: preview,
-        };
-      });
-    } catch (err) {
-      console.warn("spotify search failed, falling back to iTunes", err);
-      const results = await fetchItunesPreviews(q);
-      return results
-        .filter((it) => it.previewUrl)
-        .slice(0, 25)
-        .map((it, i) => ({
-          id: `itunes-${i}-${normalize(it.trackName)}`,
-          title: it.trackName,
-          artist: it.artistName,
-          artwork_url: (it as ItunesTrack & { artworkUrl100?: string }).artworkUrl100 ?? null,
-          preview_url: it.previewUrl ?? null,
-        }));
-    }
+    // Apple Music (iTunes Search) is the primary source: free, no account needed, includes previews.
+    const results = (await fetchItunesPreviews(q)) as Array<ItunesTrack & { trackId?: number; artworkUrl100?: string }>;
+    return results
+      .filter((it) => it.previewUrl)
+      .slice(0, 40)
+      .map((it, i) => ({
+        id: `itunes-${it.trackId ?? i}`,
+        title: it.trackName,
+        artist: it.artistName,
+        artwork_url: it.artworkUrl100 ? it.artworkUrl100.replace("100x100", "300x300") : null,
+        preview_url: it.previewUrl ?? null,
+      }));
   });

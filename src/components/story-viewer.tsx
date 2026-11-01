@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { useSignedUrl } from "@/hooks/use-signed-url";
-import { X, ChevronLeft, ChevronRight, Heart, Play, Pause, Music, Volume2, VolumeX, Send } from "lucide-react";
+import { X, ChevronLeft, ChevronRight, Heart, Play, Pause, Music, Volume2, VolumeX, Send, MessageCircle } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { toast } from "sonner";
 import { AvatarImage } from "./avatar-image";

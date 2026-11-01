@@ -306,6 +306,15 @@ export function StoryViewer({ groups, startIndex, onClose, onViewed }: { groups:
             )}
             <div className="flex justify-center">
               <div className="flex items-center gap-1 rounded-full bg-black/50 backdrop-blur px-2 py-1.5 border border-white/10">
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); setReplyOpen((v) => !v); }}
+                  className={`flex items-center gap-1 rounded-full px-3 py-1 text-xs font-medium transition-colors ${replyOpen ? "bg-white/20 text-white" : "text-white/80 hover:bg-white/10"}`}
+                  aria-label="Reply to story"
+                >
+                  <MessageCircle className="h-4 w-4" /> Reply
+                </button>
+                <div className="h-5 w-px bg-white/20" />
                 {REACTIONS.map((emoji) => (
                   <button
                     key={emoji}

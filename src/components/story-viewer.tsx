@@ -139,21 +139,18 @@ export function StoryViewer({ groups, startIndex, onClose, onViewed }: { groups:
     if (!text || sendingReply) return;
     setSendingReply(true);
     try {
-      // Find an existing conversation between me and the author (either direction)
+      // Make sure a conversation row exists between me and the author
       const { data: convo } = await supabase
         .from("conversations")
-        .select("id, owner_id, partner_id")
-        .or(`and(owner_id.eq.${user.id},partner_id.eq.${group.user_id}),and(owner_id.eq.${group.user_id},partner_id.eq.${user.id})`)
+        .select("owner_id, partner_id")
+        .eq("owner_id", user.id)
+        .eq("partner_id", group.user_id)
         .maybeSingle();
-      let convoId = convo?.id;
-      if (!convoId) {
-        const { data: created, error: createErr } = await supabase
+      if (!convo) {
+        const { error: createErr } = await supabase
           .from("conversations")
-          .insert({ owner_id: user.id, partner_id: group.user_id })
-          .select("id")
-          .single();
-        if (createErr) throw createErr;
-        convoId = created.id;
+          .insert({ owner_id: user.id, partner_id: group.user_id });
+        if (createErr && !String(createErr.message).includes("duplicate")) throw createErr;
       }
       const { error: msgErr } = await supabase.from("messages").insert({
         sender_id: user.id,

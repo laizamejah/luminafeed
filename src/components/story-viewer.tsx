@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { useSignedUrl } from "@/hooks/use-signed-url";
-import { X, ChevronLeft, ChevronRight, Heart, Play, Pause, Music } from "lucide-react";
+import { X, ChevronLeft, ChevronRight, Heart, Play, Pause, Music, Volume2, VolumeX, Send, MessageCircle } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { toast } from "sonner";
 import { AvatarImage } from "./avatar-image";
@@ -54,6 +54,10 @@ export function StoryViewer({ groups, startIndex, onClose, onViewed }: { groups:
   const [iIdx, setIIdx] = useState(0);
   const [progress, setProgress] = useState(0);
   const [playing, setPlaying] = useState(false);
+  const [muted, setMuted] = useState(false);
+  const [replyOpen, setReplyOpen] = useState(false);
+  const [replyText, setReplyText] = useState("");
+  const [sendingReply, setSendingReply] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(typeof window !== "undefined" ? getStoryAudio() : null);
   const { data: user } = useCurrentUser();
 
@@ -83,13 +87,14 @@ export function StoryViewer({ groups, startIndex, onClose, onViewed }: { groups:
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
-    
+
     // Reset state
     setPlaying(false);
+    audio.muted = muted;
     if (!item?.audio_preview_url) { audio.pause(); return; }
     if (audio.src !== item.audio_preview_url) { audio.src = item.audio_preview_url; }
     audio.currentTime = 0;
-    
+
     const playPromise = audio.play();
     if (playPromise !== undefined) {
       playPromise
@@ -117,7 +122,65 @@ export function StoryViewer({ groups, startIndex, onClose, onViewed }: { groups:
     else if (gIdx > 0) { setGIdx(gIdx - 1); setIIdx(0); }
   }
 
+  function toggleSpeaker() {
+    const audio = audioRef.current;
+    if (!audio) return;
+    const nextMuted = !muted;
+    setMuted(nextMuted);
+    audio.muted = nextMuted;
+    if (!nextMuted && !playing && item?.audio_preview_url) {
+      audio.play().then(() => setPlaying(true)).catch(() => {});
+    }
+  }
+
+  async function sendReply() {
+    if (!user || !group || !item) return;
+    const text = replyText.trim();
+    if (!text || sendingReply) return;
+    setSendingReply(true);
+    try {
+      // Make sure a conversation row exists between me and the author
+      const { data: convo } = await supabase
+        .from("conversations")
+        .select("owner_id, partner_id")
+        .eq("owner_id", user.id)
+        .eq("partner_id", group.user_id)
+        .maybeSingle();
+      if (!convo) {
+        const { error: createErr } = await supabase
+          .from("conversations")
+          .insert({ owner_id: user.id, partner_id: group.user_id });
+        if (createErr && !String(createErr.message).includes("duplicate")) throw createErr;
+      }
+      const { error: msgErr } = await supabase.from("messages").insert({
+        sender_id: user.id,
+        recipient_id: group.user_id,
+        content: `Replied to ${group.display_name ?? group.username}'s story: ${text}`,
+      });
+      if (msgErr) throw msgErr;
+      try {
+        if (group.user_id !== user.id) {
+          await supabase.from("notifications").insert({
+            user_id: group.user_id,
+            actor_id: user.id,
+            type: "story_reply",
+            data: { story_id: item.id, text },
+          });
+        }
+      } catch {}
+      toast.success("Reply sent");
+      setReplyText("");
+      setReplyOpen(false);
+    } catch {
+      toast.error("Could not send reply");
+    } finally {
+      setSendingReply(false);
+    }
+  }
+
   if (!group || !item) return null;
+
+  const showMusic = !!item.audio_preview_url;
 
   return (
     <div className="fixed inset-0 z-50 bg-black flex items-center justify-center">
@@ -137,6 +200,15 @@ export function StoryViewer({ groups, startIndex, onClose, onViewed }: { groups:
             <div className="font-medium">{group.display_name || group.username}</div>
             <div className="text-[10px] text-white/70">{formatDistanceToNow(new Date(item.created_at), { addSuffix: true })}</div>
           </div>
+          {showMusic && (
+            <button
+              onClick={(e) => { e.stopPropagation(); toggleSpeaker(); }}
+              className="text-white/80 hover:text-white p-2"
+              aria-label={muted ? "Unmute music" : "Mute music"}
+            >
+              {muted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
+            </button>
+          )}
           <button onClick={onClose} className="text-white/80 hover:text-white p-2"><X className="h-5 w-5" /></button>
         </div>
 
@@ -160,13 +232,13 @@ export function StoryViewer({ groups, startIndex, onClose, onViewed }: { groups:
         </div>
 
         {item.caption && (
-          <div className="absolute bottom-28 inset-x-4 z-20 text-center text-white text-sm bg-black/40 backdrop-blur px-3 py-2 rounded">
+          <div className="absolute bottom-40 inset-x-4 z-20 text-center text-white text-sm bg-black/40 backdrop-blur px-3 py-2 rounded">
             {item.caption}
           </div>
         )}
 
-        {item.audio_preview_url && (
-          <div className="absolute bottom-20 left-4 right-4 z-20 rounded-3xl border border-white/20 bg-black/70 p-3 text-white backdrop-blur sm:left-auto sm:right-auto sm:w-[calc(100%-4rem)]">
+        {showMusic && (
+          <div className="absolute bottom-24 left-4 right-4 z-20 rounded-3xl border border-white/20 bg-black/70 p-3 text-white backdrop-blur sm:left-auto sm:right-auto sm:w-[calc(100%-4rem)]">
             <div className="flex items-center gap-3">
               {item.audio_artwork_url ? (
                 <img src={item.audio_artwork_url} alt={item.audio_title ?? "Audio artwork"} className="h-12 w-12 rounded-lg object-cover" />
@@ -181,55 +253,98 @@ export function StoryViewer({ groups, startIndex, onClose, onViewed }: { groups:
                 type="button"
                 onClick={(e) => {
                   e.stopPropagation();
-                  if (!audioRef.current) return;
-                  if (playing) { audioRef.current.pause(); setPlaying(false); }
-                  else { audioRef.current.play().then(() => setPlaying(true)).catch(() => {}); }
+                  const audio = audioRef.current;
+                  if (!audio) return;
+                  if (playing) { audio.pause(); setPlaying(false); }
+                  else { audio.play().then(() => setPlaying(true)).catch(() => {}); }
                 }}
                 className="rounded-full bg-white/10 p-2 text-white hover:bg-white/20"
                 aria-label={playing ? "Pause audio" : "Play audio"}
               >
                 {playing ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
               </button>
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); toggleSpeaker(); }}
+                className="rounded-full bg-white/10 p-2 text-white hover:bg-white/20"
+                aria-label={muted ? "Unmute audio" : "Mute audio"}
+              >
+                {muted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+              </button>
             </div>
           </div>
         )}
 
-        {/* reactions bar */}
+        {/* reply + reactions bar */}
         {user && (
-          <div className="absolute bottom-4 inset-x-0 z-20 flex justify-center">
-            <div className="flex items-center gap-1 rounded-full bg-black/50 backdrop-blur px-2 py-1.5 border border-white/10">
-              {REACTIONS.map((emoji) => (
+          <div className="absolute bottom-4 inset-x-0 z-20 space-y-2">
+            {replyOpen && (
+              <form
+                onSubmit={(e) => { e.preventDefault(); sendReply(); }}
+                className="mx-auto flex w-[calc(100%-2rem)] max-w-sm items-center gap-2 rounded-full border border-white/15 bg-black/60 px-3 py-1.5 backdrop-blur"
+              >
+                <input
+                  autoFocus
+                  value={replyText}
+                  onChange={(e) => setReplyText(e.target.value)}
+                  placeholder={`Reply to ${group.display_name || group.username}…`}
+                  className="flex-1 bg-transparent text-sm text-white placeholder:text-white/50 focus:outline-none"
+                  maxLength={500}
+                />
                 <button
-                  key={emoji}
-                  onClick={async (e) => {
-                    e.stopPropagation();
-                    const { data, error } = await supabase
-                      .from("story_reactions")
-                      .insert({ story_id: item.id, user_id: user.id, emoji })
-                      .select("id")
-                      .maybeSingle();
-                    if (error) {
-                      if (String(error.message).includes("duplicate")) {
-                        toast.success(`Reacted ${emoji}`);
-                      } else {
-                        toast.error("Could not react");
-                      }
-                    } else {
-                      toast.success(`Reacted ${emoji}`);
-                      try {
-                        if (group.user_id !== user.id) {
-                          await supabase.from("notifications").insert({ user_id: group.user_id, actor_id: user.id, type: "story_reaction", data: { story_id: item.id, reaction_id: data?.id, emoji } });
-                        }
-                      } catch {}
-                    }
-                  }}
-                  className="text-2xl px-2 py-1 hover:scale-125 transition-transform"
-                  aria-label={`React ${emoji}`}
+                  type="submit"
+                  disabled={sendingReply || !replyText.trim()}
+                  className="grid h-8 w-8 place-items-center rounded-full bg-white/15 text-white disabled:opacity-40"
+                  aria-label="Send reply"
                 >
-                  {emoji}
+                  <Send className="h-4 w-4" />
                 </button>
-              ))}
-              <div className="pl-2 pr-1 text-white/60"><Heart className="h-4 w-4" /></div>
+              </form>
+            )}
+            <div className="flex justify-center">
+              <div className="flex items-center gap-1 rounded-full bg-black/50 backdrop-blur px-2 py-1.5 border border-white/10">
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); setReplyOpen((v) => !v); }}
+                  className={`flex items-center gap-1 rounded-full px-3 py-1 text-xs font-medium transition-colors ${replyOpen ? "bg-white/20 text-white" : "text-white/80 hover:bg-white/10"}`}
+                  aria-label="Reply to story"
+                >
+                  <MessageCircle className="h-4 w-4" /> Reply
+                </button>
+                <div className="h-5 w-px bg-white/20" />
+                {REACTIONS.map((emoji) => (
+                  <button
+                    key={emoji}
+                    onClick={async (e) => {
+                      e.stopPropagation();
+                      const { data, error } = await supabase
+                        .from("story_reactions")
+                        .insert({ story_id: item.id, user_id: user.id, emoji })
+                        .select("id")
+                        .maybeSingle();
+                      if (error) {
+                        if (String(error.message).includes("duplicate")) {
+                          toast.success(`Reacted ${emoji}`);
+                        } else {
+                          toast.error("Could not react");
+                        }
+                      } else {
+                        toast.success(`Reacted ${emoji}`);
+                        try {
+                          if (group.user_id !== user.id) {
+                            await supabase.from("notifications").insert({ user_id: group.user_id, actor_id: user.id, type: "story_reaction", data: { story_id: item.id, reaction_id: data?.id, emoji } });
+                          }
+                        } catch {}
+                      }
+                    }}
+                    className="text-2xl px-2 py-1 hover:scale-125 transition-transform"
+                    aria-label={`React ${emoji}`}
+                  >
+                    {emoji}
+                  </button>
+                ))}
+                <div className="pl-2 pr-1 text-white/60"><Heart className="h-4 w-4" /></div>
+              </div>
             </div>
           </div>
         )}

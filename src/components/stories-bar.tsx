@@ -164,7 +164,17 @@ export function StoriesBar() {
       map.set(s.user_id, g);
       groups.push(g);
     }
-    g.items.push({ id: s.id, storage_path: s.storage_path, media_type: s.media_type, caption: s.caption, created_at: s.created_at });
+    g.items.push({
+      id: s.id,
+      storage_path: s.storage_path,
+      media_type: s.media_type,
+      caption: s.caption,
+      created_at: s.created_at,
+      audio_preview_url: s.audio_preview_url,
+      audio_title: s.audio_title,
+      audio_artist: s.audio_artist,
+      audio_artwork_url: s.audio_artwork_url,
+    });
   }
   // Sort items chronological within group
   groups.forEach((g) => g.items.sort((a, b) => a.created_at.localeCompare(b.created_at)));

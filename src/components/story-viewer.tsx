@@ -87,26 +87,33 @@ export function StoryViewer({ groups, startIndex, onClose, onViewed }: { groups:
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
+    let cancelled = false;
+    let attempts = 0;
 
     // Reset state
     setPlaying(false);
     audio.muted = muted;
     if (!item?.audio_preview_url) { audio.pause(); return; }
-    if (audio.src !== item.audio_preview_url) { audio.src = item.audio_preview_url; }
+    if (audio.src !== item.audio_preview_url) { audio.src = item.audio_preview_url; audio.load(); }
     audio.currentTime = 0;
 
-    const playPromise = audio.play();
-    if (playPromise !== undefined) {
-      playPromise
-        .then(() => {
-          setPlaying(true);
-        })
-        .catch((error) => {
-          console.error("Autoplay prevented:", error);
-          setPlaying(false);
-          // Don't toast here to avoid annoying the user if they're just scrolling through
+    // Retry playback: iOS and dev StrictMode can abort the first play() (e.g. a
+    // mount/unmount pause races it), so keep trying briefly until it sticks.
+    const tryPlay = () => {
+      if (cancelled || attempts >= 4) return;
+      attempts++;
+      const p = audio.play();
+      if (p !== undefined) {
+        p.then(() => {
+          if (!cancelled) setPlaying(true);
+        }).catch(() => {
+          if (!cancelled) setTimeout(tryPlay, 350);
         });
-    }
+      }
+    };
+    tryPlay();
+
+    return () => { cancelled = true; };
   }, [item?.audio_preview_url, item?.id]);
 
   useEffect(() => () => { getStoryAudio().pause(); }, []);

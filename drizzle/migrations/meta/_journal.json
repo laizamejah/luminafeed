@@ -50,6 +50,13 @@
       "when": 1791264191467,
       "tag": "0006_tighten_albums_collabs",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1793689690709,
+      "tag": "0007_story_view_replay_fix",
+      "breakpoints": true
     }
   ]
 }

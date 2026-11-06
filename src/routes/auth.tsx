@@ -1,10 +1,11 @@
-import { createFileRoute, useNavigate, redirect } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate, redirect } from "@tanstack/react-router";
 import { useState } from "react";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import loginCharacter from "@/assets/login-creative-character-cutout.png";
 import { toast } from "sonner";
 
 const searchSchema = z.object({ mode: z.enum(["signin", "signup"]).optional() });
@@ -12,6 +13,16 @@ const searchSchema = z.object({ mode: z.enum(["signin", "signup"]).optional() })
 export const Route = createFileRoute("/auth")({
   validateSearch: searchSchema,
   ssr: false,
+  head: () => ({
+    meta: [
+      { title: "Sign in to Lumina" },
+      { name: "description", content: "Sign in or create your Lumina account to share and discover photography." },
+      { property: "og:title", content: "Sign in to Lumina" },
+      { property: "og:description", content: "Sign in or create your Lumina account to share and discover photography." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+    ],
+  }),
   beforeLoad: async () => {
     const { data } = await supabase.auth.getUser();
     if (data.user) throw redirect({ to: "/feed" });
@@ -87,104 +98,136 @@ function AuthPage() {
   }
 
   return (
-    <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center px-6 py-12">
-      <div className="w-full max-w-sm">
-        {/* Logo */}
-        <div className="flex flex-col items-center mb-10">
-          <div className="relative mb-5 grid h-20 w-20 place-items-center rounded-2xl bg-gradient-to-br from-neutral-800 to-neutral-900 shadow-2xl border border-white/10">
-            <span className="font-serif text-4xl font-bold text-white">L</span>
-            <span className="absolute -right-2 top-1/2 -translate-y-1/2 flex gap-0.5">
-              <span className="h-2 w-2 rounded-full bg-neutral-500" />
-              <span className="h-2.5 w-2.5 rounded-full bg-neutral-400" />
-              <span className="h-2 w-2 rounded-full bg-neutral-600" />
-            </span>
-          </div>
-          <h1 className="font-serif text-5xl tracking-[0.15em] text-neutral-100">LUMINA</h1>
+    <main className="auth-screen">
+      <div className="auth-shell">
+        <header className="auth-topline">
+          <Link to="/" className="auth-brand" aria-label="Lumina home">LUMINA<span>.</span></Link>
+          <span className="auth-top-note">A home for your point of view</span>
+        </header>
+
+        <div className="auth-heading">
+          <h1><span>Creative</span> {mode === "signin" ? "Login" : "Sign up"} to Lumina</h1>
+          <p>Make room for your point of view.</p>
         </div>
 
-        <form onSubmit={handleEmail} className="space-y-3">
-          {mode === "signup" && (
-            <Input
-              value={username}
-              onChange={(e) => setUsername(e.target.value.toLowerCase())}
-              placeholder="Username"
-              maxLength={30}
-              className="h-12 rounded-xl border-white/15 bg-white/5 text-white placeholder:text-neutral-500 backdrop-blur-md focus-visible:ring-white/20"
-            />
-          )}
-          <Input
-            type="email"
-            required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="Username or Email"
-            className="h-12 rounded-xl border-white/15 bg-white/5 text-white placeholder:text-neutral-500 backdrop-blur-md focus-visible:ring-white/20"
-          />
-          <Input
-            type="password"
-            required
-            minLength={6}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="Password"
-            className="h-12 rounded-xl border-white/15 bg-white/5 text-white placeholder:text-neutral-500 backdrop-blur-md focus-visible:ring-white/20"
-          />
-
-          {mode === "signin" && (
-            <div className="flex justify-end">
-              <button
-                type="button"
-                onClick={handleForgotPassword}
-                disabled={sendingReset}
-                className="text-xs text-neutral-400 hover:text-white transition-colors"
-              >
-                {sendingReset ? "Sending…" : "Forgot Password?"}
-              </button>
+        <div className="auth-stage">
+          <section className="auth-visual" aria-label="A space for photography">
+            <div className="auth-visual-copy">
+              <p className="auth-kicker">A space for photography</p>
+              <h2>Every frame<br />has a story.</h2>
+              <p className="auth-visual-note">Find your people. Share what moves you.</p>
             </div>
-          )}
+            <img
+              src={loginCharacter}
+              alt="A creative welcoming you to Lumina"
+              width={768}
+              height={1024}
+              fetchPriority="high"
+              className="auth-character"
+            />
+            <span className="auth-image-caption">PHOTOGRAPHY, IN ITS BEST LIGHT</span>
+          </section>
 
-          <Button
-            type="submit"
-            disabled={loading}
-            className="w-full h-12 rounded-xl bg-white text-black font-medium hover:bg-neutral-200"
-          >
-            {mode === "signin" ? "Login" : "Create account"}
-          </Button>
-        </form>
+          <section className="auth-form-area" aria-labelledby="auth-form-title">
+            <div className="auth-form-heading">
+              <p className="auth-kicker">{mode === "signin" ? "WELCOME BACK" : "YOUR NEXT CHAPTER"}</p>
+              <h2 id="auth-form-title">{mode === "signin" ? "Sign in" : "Create your account"}</h2>
+              <p>{mode === "signin" ? "Pick up where your inspiration left off." : "Join a community that sees things differently."}</p>
+            </div>
 
-        <div className="mt-6 space-y-3">
-          <button
-            type="button"
-            onClick={() => handleOAuth("google")}
-            disabled={loading}
-            className="w-full h-12 rounded-xl border border-white/10 bg-white/5 backdrop-blur-md text-white flex items-center justify-center gap-3 hover:bg-white/10 transition-colors disabled:opacity-50"
-          >
-            <GoogleG className="h-5 w-5" />
-            <span className="text-sm font-medium">Sign in with Google</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => handleOAuth("apple")}
-            disabled={loading}
-            className="w-full h-12 rounded-xl border border-white/10 bg-white/5 backdrop-blur-md text-white flex items-center justify-center gap-3 hover:bg-white/10 transition-colors disabled:opacity-50"
-          >
-            <AppleIcon className="h-5 w-5" />
-            <span className="text-sm font-medium">Sign in with Apple</span>
-          </button>
+            <form onSubmit={handleEmail} className="auth-form">
+              {mode === "signup" && (
+                <Input
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value.toLowerCase())}
+                  placeholder="Username"
+                  aria-label="Username"
+                  autoComplete="username"
+                  maxLength={30}
+                  className="auth-input"
+                />
+              )}
+              <Input
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Email address"
+                aria-label="Email address"
+                autoComplete="email"
+                className="auth-input"
+              />
+              <Input
+                type="password"
+                required
+                minLength={6}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Password"
+                aria-label="Password"
+                autoComplete={mode === "signin" ? "current-password" : "new-password"}
+                className="auth-input"
+              />
+
+              {mode === "signin" && (
+                <div className="auth-forgot-row">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={handleForgotPassword}
+                    disabled={sendingReset}
+                    className="auth-forgot"
+                  >
+                    {sendingReset ? "Sending…" : "Forgot password?"}
+                  </Button>
+                </div>
+              )}
+
+              <Button type="submit" disabled={loading} className="auth-submit">
+                {loading ? "Please wait…" : mode === "signin" ? "Login" : "Create account"}
+              </Button>
+            </form>
+
+            <div className="auth-divider"><span>or continue with</span></div>
+            <div className="auth-providers">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => handleOAuth("google")}
+                disabled={loading}
+                className="auth-provider"
+              >
+                <GoogleG className="h-5 w-5" />
+                <span>Google</span>
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => handleOAuth("apple")}
+                disabled={loading}
+                className="auth-provider"
+              >
+                <AppleIcon className="h-5 w-5" />
+                <span>Apple</span>
+              </Button>
+            </div>
+
+            <p className="auth-mode-switch">
+              {mode === "signin" ? "New to Lumina?" : "Already part of Lumina?"}
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => setMode(mode === "signin" ? "signup" : "signin")}
+                className="auth-mode-button"
+              >
+                {mode === "signin" ? "Create an account" : "Sign in"}
+              </Button>
+            </p>
+          </section>
         </div>
-
-        <p className="mt-8 text-center text-sm text-neutral-400">
-          {mode === "signin" ? "Don't have an account? " : "Already have an account? "}
-          <button
-            type="button"
-            onClick={() => setMode(mode === "signin" ? "signup" : "signin")}
-            className="font-semibold text-white hover:underline"
-          >
-            {mode === "signin" ? "Sign Up" : "Sign In"}
-          </button>
-        </p>
+        <footer className="auth-footer">LUMINA <span>·</span> MAKE SOMETHING WORTH REMEMBERING</footer>
       </div>
-    </div>
+    </main>
   );
 }
 

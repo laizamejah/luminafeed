@@ -38,7 +38,16 @@ function AuthPage() {
   const [username, setUsername] = useState("");
   const [loading, setLoading] = useState(false);
   const [sendingReset, setSendingReset] = useState(false);
+  const [authFeedback, setAuthFeedback] = useState("");
+  const [showFeedTransition, setShowFeedTransition] = useState(false);
   const nav = useNavigate();
+
+  async function enterFeed() {
+    setShowFeedTransition(true);
+    const delay = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 460;
+    await new Promise((resolve) => window.setTimeout(resolve, delay));
+    await nav({ to: "/feed", replace: true });
+  }
 
   async function handleForgotPassword() {
     if (!email) return toast.error("Enter your email above first");
@@ -73,9 +82,12 @@ function AuthPage() {
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
+        await enterFeed();
+        return;
       }
       nav({ to: "/feed" });
     } catch (err) {
+      if (mode === "signin") setAuthFeedback("Sign in — try again");
       toast.error(err instanceof Error ? err.message : "Something went wrong");
     } finally {
       setLoading(false);
@@ -90,7 +102,7 @@ function AuthPage() {
       });
       if (result.error) throw result.error;
       if (result.redirected) return;
-      nav({ to: "/feed" });
+      await enterFeed();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : `${provider} sign-in failed`);
       setLoading(false);
@@ -123,8 +135,9 @@ function AuthPage() {
               width={768}
               height={1024}
               fetchPriority="high"
-              className="auth-character"
+              className={`auth-character ${authFeedback ? "auth-character--retry" : ""}`}
             />
+            {authFeedback && <div className="auth-feedback" role="status" aria-live="polite">{authFeedback}</div>}
             <span className="auth-image-caption">PHOTOGRAPHY, IN ITS BEST LIGHT</span>
           </section>
 
@@ -151,7 +164,7 @@ function AuthPage() {
                 type="email"
                 required
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => { setEmail(e.target.value); setAuthFeedback(""); }}
                 placeholder="Email address"
                 aria-label="Email address"
                 autoComplete="email"
@@ -162,7 +175,7 @@ function AuthPage() {
                 required
                 minLength={6}
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e) => { setPassword(e.target.value); setAuthFeedback(""); }}
                 placeholder="Password"
                 aria-label="Password"
                 autoComplete={mode === "signin" ? "current-password" : "new-password"}
@@ -217,7 +230,7 @@ function AuthPage() {
               <Button
                 type="button"
                 variant="ghost"
-                onClick={() => setMode(mode === "signin" ? "signup" : "signin")}
+                onClick={() => { setMode(mode === "signin" ? "signup" : "signin"); setAuthFeedback(""); }}
                 className="auth-mode-button"
               >
                 {mode === "signin" ? "Create an account" : "Sign in"}
@@ -227,6 +240,12 @@ function AuthPage() {
         </div>
         <footer className="auth-footer">LUMINA <span>·</span> MAKE SOMETHING WORTH REMEMBERING</footer>
       </div>
+      {showFeedTransition && (
+        <div className="auth-feed-transition" role="status" aria-live="polite">
+          <img src="/icons/icon-192.png" alt="" width={56} height={56} />
+          <span>Opening your feed</span>
+        </div>
+      )}
     </main>
   );
 }
